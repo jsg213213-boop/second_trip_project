@@ -1,17 +1,4 @@
-import 'package:busanit_401_k9_flutter_project/screen/basic2-miniproject/TabBarScreen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic3-http/_1_dummyJson/screens/dummy_user_detail_screen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic3-http/_3_news_api/screens/news_screen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic3-http/_4_public_data_1_earthquake/screens/PublicDataScreen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic4-provider/screens/CounterScreen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic5-provider-pdData/_1_FoodData/screens/my_pd_test_screen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic5-provider-pdData/_2_TourData/screens/tour_screen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic5-provider-pdData/_3_TourData_Pagination_Cursor_Based/screens/tour_screen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic6-map/basic1-provider-version/screens/location_screen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic6-map/basic1/screens/location_screen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic6-map/basic2-googlePlaces-Provider/screens/map_screen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic6-map/basic2-googlePlaces/screens/map_screen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic7-DB/basic-db1/screens/DbBasicScreen.dart';
-import 'package:busanit_401_k9_flutter_project/screen/basic7-DB/basic-db2-orm/screens/todo_screen.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
