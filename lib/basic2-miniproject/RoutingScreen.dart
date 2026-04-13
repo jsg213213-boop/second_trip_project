@@ -10,6 +10,7 @@ import 'LoginScreen2.dart';
 import 'MainScreen.dart';
 import 'SignupScreen.dart';
 import 'SplashScreen.dart';
+import 'TabBarScreen.dart';
 import 'ViewPagerScreen.dart';
 
 class RoutingScreen extends StatelessWidget {
