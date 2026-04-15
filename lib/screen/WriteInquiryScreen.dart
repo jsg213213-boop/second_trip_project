@@ -28,9 +28,27 @@ class _WriteInquiryScreenState extends State<WriteInquiryScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              // TODO: 나중에 서버 API 연결할 곳!
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('문의가 등록되었습니다.')));
-              Navigator.pop(context);
+              // ⭐ 1. 빈칸 체크 (제목이나 내용이 없으면 등록 안 되게!)
+              if (_titleController.text.trim().isEmpty || _contentController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('제목과 내용을 모두 입력해주세요.')),
+                );
+                return;
+              }
+
+              // ⭐ 2. 전달할 데이터 맵 만들기
+              // InquiryScreen에서 사용하는 Key값들이랑 똑같이 맞춰야 해!
+              Map<String, String> newInquiry = {
+                'title': _titleController.text,
+                'date': '2026.04.15', // 오늘 날짜
+                'category': _selectedCategory,
+                'status': '접수완료',
+                'content': _contentController.text,
+                'reply': '', // 답변은 아직 없으니까 빈값
+              };
+
+              // ⭐ 3. 핵심! pop 할 때 데이터를 인자로 넣어주기
+              Navigator.pop(context, newInquiry);
             },
             child: Text('등록', style: TextStyle(color: classicBlue, fontWeight: FontWeight.bold)),
           ),

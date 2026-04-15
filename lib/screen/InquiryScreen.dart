@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'WriteInquiryScreen.dart'; // 기존 작성 페이지 임포트
-import 'InquiryDetailScreen.dart'; // ⭐ 새로 만들 상세 페이지 임포트 필수!
+import 'WriteInquiryScreen.dart';
+import 'InquiryDetailScreen.dart';
 
 class InquiryScreen extends StatefulWidget {
   const InquiryScreen({super.key});
@@ -13,7 +13,7 @@ class InquiryScreen extends StatefulWidget {
 class _InquiryScreenState extends State<InquiryScreen> {
   final Color classicBlue = const Color(0xFF004680);
 
-  // 샘플 데이터 (상세 내용을 위해 category와 reply 데이터 추가됨)
+  // 1. 문의 내역 데이터 (나중에 DB와 연동될 리스트)
   List<Map<String, String>> inquiries = [
     {
       'title': '비행기 예약 취소 관련 문의드립니다.',
@@ -29,9 +29,31 @@ class _InquiryScreenState extends State<InquiryScreen> {
       'category': '이용문의',
       'status': '검토중',
       'content': '오후 2시쯤 도착할 것 같은데 혹시 얼리 체크인이 가능할까요?',
-      'reply': '' // 답변 대기중
+      'reply': ''
     },
   ];
+
+  // ⭐ 2. 작성 페이지로 이동하고 결과 받아오는 함수
+  Future<void> _goToWriteScreen() async {
+    // Navigator.push가 완료될 때까지 await(기다림)!
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const WriteInquiryScreen()),
+    );
+
+    // ⭐ 작성 페이지에서 데이터를 가지고 돌아왔을 때 (등록 버튼 클릭 시)
+    if (result != null && result is Map<String, String>) {
+      setState(() {
+        // 리스트 맨 앞에 추가!
+        inquiries.insert(0, result);
+      });
+
+      // 등록 완료 안내
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('문의가 정상적으로 등록되었습니다.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,12 +67,7 @@ class _InquiryScreenState extends State<InquiryScreen> {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const WriteInquiryScreen()),
-              );
-            },
+            onPressed: _goToWriteScreen, // ⭐ 수정된 함수 연결
             child: Text(
               '문의하기',
               style: TextStyle(color: classicBlue, fontWeight: FontWeight.bold, fontSize: 14),
@@ -101,7 +118,6 @@ class _InquiryScreenState extends State<InquiryScreen> {
         ),
         trailing: const Icon(CupertinoIcons.chevron_forward, size: 16, color: Colors.grey),
         onTap: () {
-          // ⭐ 상세 페이지로 이동하며 데이터 넘기기!
           Navigator.push(
             context,
             MaterialPageRoute(

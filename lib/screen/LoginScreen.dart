@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+// ⭐ 비밀번호 찾기 화면 임포트 (파일명 확인해줘!)
+import 'package:second_trip_project/screen/ForgotPasswordScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -9,17 +11,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // 1. 컨트롤러 선언
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  // 비밀번호 보이기 상태 관리
   bool _isPasswordVisible = false;
-
-  // 포인트 컬러: 클래식 블루
   final Color classicBlue = const Color(0xFF004680);
 
-  // 애플 스타일 입력창 장식 함수 (재사용)
   InputDecoration _buildAppleInputDecoration(String labelText, IconData icon, {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: labelText,
@@ -47,7 +44,6 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // 로그인 첫 화면이므로 leading(뒤로가기)은 제거하거나 필요시 유지
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
@@ -58,7 +54,6 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                // --- 상단 로고 & 타이틀 ---
                 Center(
                   child: Column(
                     children: [
@@ -78,7 +73,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 60),
 
-                // --- 이메일 입력 ---
                 TextField(
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -86,7 +80,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // --- 패스워드 입력 ---
                 TextField(
                   controller: passwordController,
                   obscureText: !_isPasswordVisible,
@@ -108,30 +101,32 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
+                // ⭐ [수정 포인트] 비밀번호 찾기 연결!
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      // 비밀번호 찾기 화면으로 이동
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                      );
+                    },
                     child: Text('비밀번호를 잊으셨나요?', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
                   ),
                 ),
                 const SizedBox(height: 30),
 
-                // --- 로그인 버튼 ---
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
                     onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          title: const Text('로그인 정보'),
-                          content: Text('아이디: ${emailController.text}\n로그인을 시도합니다.'),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(context), child: const Text('확인')),
-                          ],
+                      Navigator.pushReplacementNamed(context, '/mypage');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${emailController.text}님, 환영합니다!'),
+                          backgroundColor: classicBlue,
                         ),
                       );
                     },
@@ -147,14 +142,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 24),
 
-                // --- 회원가입 유도 (이동 로직 추가!) ---
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text('아직 회원이 아니신가요?', style: TextStyle(color: Colors.grey[600])),
                     TextButton(
                       onPressed: () {
-                        // ⭐ main.dart에 설정한 '/signup' 경로로 이동!
                         Navigator.pushNamed(context, '/signup');
                       },
                       child: Text('회원가입',

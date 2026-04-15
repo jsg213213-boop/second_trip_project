@@ -27,7 +27,7 @@ class RoutingScreen extends StatelessWidget {
         '/test_main':    (context) => const TestMainScreen(),
 
         '/mypage': (context) => const MyPageScreen(),
-        '/edit_profile': (context) => const EditProfileScreen(),
+        '/edit_profile': (context) => const EditProfileScreen(name: '', phone: '',),
         '/change_password': (context) => const ChangePasswordScreen(),
         '/my_posts': (context) => const MyPostsScreen(),
         '/inquiry': (context) => const InquiryScreen(),

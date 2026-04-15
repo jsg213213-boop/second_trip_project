@@ -103,7 +103,7 @@ class InquiryDetailScreen extends StatelessWidget {
     );
   }
 
-  // 답변 대기 중 박스 위젯
+  // 답변 대기 중 박스 위젯!
   Widget _buildWaitingBox() {
     return Container(
       padding: const EdgeInsets.all(20),
