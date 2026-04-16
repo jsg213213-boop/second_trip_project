@@ -37,6 +37,7 @@ Future<void> main() async {
           ChangeNotifierProvider<CalendarController>(
               create: (_) => CalendarController()),
         ],
+
         // RoutingScreen에서 라우트 관리
         child: const RoutingScreen(),
       ),
