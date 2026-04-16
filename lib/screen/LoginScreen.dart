@@ -117,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // ⭐ [수정] 팀원 로고 이미지 적용 (assets 경로 확인!)
                       Image.asset(
                         'assets/images/logo.png',
-                        height: 60, // 로고 크기 적절히 조절
+                        height: 50, // 로고 크기 적절히 조절
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) =>
                             Icon(CupertinoIcons.paperplane_fill, size: 80, color: yeogiRed),
