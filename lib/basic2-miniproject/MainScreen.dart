@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class MainScreen extends StatelessWidget {
@@ -8,254 +7,192 @@ class MainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          '여기어때',
-          style: TextStyle(color: Color(0xFFE61919), fontWeight: FontWeight.bold, fontSize: 24),
-        ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16, top: 10, bottom: 10),
-            child: OutlinedButton(
-              onPressed: () => Navigator.pushNamed(context, '/login'),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.blue),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text("로그인 / 회원가입", style: TextStyle(color: Colors.blue, fontSize: 12)),
-            ),
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(context),
       body: SafeArea(
         child: ListView(
           children: [
-            // [상단] 카테고리 그리드 메뉴 (왼쪽 사진 내용)
-            _buildCategoryGrid(context),
+            // 1. 상단 비주얼 배너 영역
+            _buildHeaderImage(),
 
             const Divider(thickness: 8, color: Color(0xFFF5F5F5)),
 
-            // [하단] 상세 섹션들 (오른쪽 사진 내용)
+            // 2. 메인 카테고리 섹션 (숙소, 항공, 패키지, 렌터카)
+            _buildMainCategoryGrid(context),
 
-            // 1. 최근에 본 상품
-            _buildHorizontalSection("최근에 본 상품", [
-              _buildLargeCard("국내 숙소", "★당일특가★...", "assets/images/recent1.png"),
-            ]),
+            const Divider(thickness: 8, color: Color(0xFFF5F5F5)),
 
-            // 이벤트 배너
-            _buildEventBanner(),
+            // 3. 서비스 메뉴 섹션 (재현님 담당 파트 중심)
+            _buildServiceMenuSection(context),
 
-            // 2. 미리 준비하는 공휴일
-            _buildHorizontalSection("미리 준비하는 공휴일", [
-              _buildProductCard("강릉", "세인트존스 호텔", "58,400원", true),
-              _buildProductCard("서울", "시그니엘 서울", "456,500원", true),
-            ]),
-
-            // 3. 오늘 체크인 호텔특가
-            _buildHorizontalSection("오늘 체크인 호텔특가", [
-              _buildProductCard("부산", "해운대 호텔", "88,900원", false),
-              _buildProductCard("제주", "서귀포 리조트", "112,400원", false),
-            ]),
-
-            // 4. 요즘 많이 찾는 펜션
-            _buildHorizontalSection("요즘 많이 찾는 펜션", [
-              _buildProductCard("가평", "럭셔리 풀빌라", "280,000원", false),
-              _buildProductCard("포천", "숲속 글램핑", "120,000원", true),
-            ]),
-
-            // 5. 해외인기 도시 TOP6
-            _buildHorizontalSection("해외인기 도시 TOP6", [
-              _buildRankingCard("1", "오사카", "일본"),
-              _buildRankingCard("2", "도쿄", "일본"),
-              _buildRankingCard("3", "방콕", "태국"),
-              _buildRankingCard("4", "다낭", "베트남"),
-              _buildRankingCard("5", "후쿠오카", "일본"),
-              _buildRankingCard("6", "타이베이", "대만"),
-            ]),
-
-            // 6. 해외 항공+숙소 특가
-            _buildHorizontalSection("해외 항공+숙소 특가", [
-              _buildProductCard("세부", "제이파크 리조트", "350,000원", true),
-              _buildProductCard("코타키나발루", "샹그릴라", "420,000원", true),
-            ]),
-
-            // 7. 지금 여기
-            _buildHorizontalSection("지금 여기", [
-              _buildLargeCard("벚꽃 축제", "벚꽃 명소 베스트", "assets/images/cherry.png"),
-              _buildLargeCard("서울 여행", "궁궐 야간 개장", "assets/images/palace.png"),
-            ]),
-
-            const SizedBox(height: 50),
+            const SizedBox(height: 30),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: _buildBottomNav(context),
     );
   }
 
-  // --- 위젯 구성 함수들 ---
-
-  // 1. 상단 카테고리 그리드 (제외 항목 반영 및 색상 적용)
-  Widget _buildCategoryGrid(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: 4,
-        mainAxisSpacing: 25,
-        crossAxisSpacing: 10,
-        children: [
-          _buildMenuIcon(context, Icons.apartment, "호텔·리조트", const Color(0xFF424242), '/hotel'),
-          _buildMenuIcon(context, Icons.hotel, "모텔", const Color(0xFFFF5252), '/motel'),
-          _buildMenuIcon(context, Icons.pool, "펜션·풀빌라", const Color(0xFF40C4FF), '/pension'),
-          _buildMenuIcon(context, Icons.terrain, "캠핑·글램핑", const Color(0xFF4CAF50), '/camping'),
-          _buildMenuIcon(context, Icons.home_work, "홈&빌라", const Color(0xFFFF8A65), '/villa'),
-          _buildMenuIcon(context, Icons.bed, "게하·한옥", const Color(0xFF8D6E63), '/guesthouse'),
-          _buildMenuIcon(context, Icons.directions_car, "렌터카", const Color(0xFFFF5252), '/rentcar'),
-          _buildMenuIcon(context, Icons.card_travel, "패키지 여행", const Color(0xFFFFAB40), '/package'),
-          _buildMenuIcon(context, Icons.airplane_ticket, "항공+숙소", const Color(0xFF448AFF), '/flightHotel'),
-          _buildMenuIcon(context, Icons.flight, "항공", const Color(0xFFFF5252), '/flight'),
-        ],
+  // 앱바 구성: 로그인/회원가입 버튼 추가
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      title: const Text(
+        '여기어때',
+        style: TextStyle(
+          color: Color(0xFFE61919),
+          fontWeight: FontWeight.bold,
+          fontSize: 24,
+        ),
       ),
-    );
-  }
-
-  // 2. 공통 섹션 레이아웃 (제목 + 가로 리스트)
-  Widget _buildHorizontalSection(String title, List<Widget> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const Icon(Icons.chevron_right, color: Colors.grey),
-            ],
+      actions: [
+        // 상단 로그인/회원가입 버튼 (지효님 파트 연결)
+        TextButton(
+          onPressed: () => Navigator.pushNamed(context, '/login'),
+          child: const Text(
+            '로그인/회원가입',
+            style: TextStyle(
+              color: Colors.blueAccent,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
           ),
         ),
-        SizedBox(
-          height: 220,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.only(left: 20),
-            children: items,
-          ),
+        IconButton(
+          icon: const Icon(Icons.search, color: Colors.black),
+          onPressed: () => Navigator.pushNamed(context, '/search'),
         ),
       ],
     );
   }
 
-  // 3. 상품 카드 위젯
-  Widget _buildProductCard(String location, String name, String price, bool isSale) {
+  // 헤더 이미지
+  Widget _buildHeaderImage() {
     return Container(
-      width: 150,
-      margin: const EdgeInsets.only(right: 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 120,
-            decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8)),
-            child: const Center(child: Icon(Icons.image, color: Colors.grey)),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Center(
+        child: Image.asset(
+          'assets/images/logo.png',
+          width: double.infinity,
+          height: 100,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            height: 200,
+            color: Colors.grey[200],
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.image, size: 50, color: Colors.grey),
+                Text("이미지를 찾을 수 없습니다", style: TextStyle(fontSize: 12)),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(location, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-          Text(name, style: const TextStyle(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-          Text(price, style: TextStyle(color: isSale ? Colors.red : Colors.black, fontWeight: FontWeight.bold)),
+        ),
+      ),
+    );
+  }
+
+  // 메인 카테고리 그리드 (숙소, 항공, 패키지, 렌터카)
+  Widget _buildMainCategoryGrid(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+      child: GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: 4,
+        children: [
+          _buildCatItem(context, Icons.home_work, "숙소", '/hotel'),
+          _buildCatItem(context, Icons.flight, "항공", '/flights'),
+          _buildCatItem(context, Icons.inventory_2, "패키지", '/package_list'),
+          _buildCatItem(context, Icons.directions_car, "렌터카", '/rent_car'),
         ],
       ),
     );
   }
 
-  // 4. 순위 정보가 있는 카드 위젯 (해외인기 도시용)
-  Widget _buildRankingCard(String rank, String city, String country) {
-    return Container(
-      width: 150,
-      margin: const EdgeInsets.only(right: 15),
-      child: Stack(
-        children: [
-          Container(
-            height: 150,
-            decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(8)),
-          ),
-          Positioned(
-            top: 5, left: 10,
-            child: Text(rank, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white, fontStyle: FontStyle.italic, shadows: [Shadow(blurRadius: 2, color: Colors.black45)])),
-          ),
-          Positioned(
-            bottom: 10, left: 10,
-            child: Text("$city\n$country", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          )
-        ],
-      ),
-    );
-  }
-
-  // 5. 큰 썸네일 카드 위젯 (최근 본 상품, 지금 여기용)
-  Widget _buildLargeCard(String tag, String title, String imgPath) {
-    return Container(
-      width: 140,
-      margin: const EdgeInsets.only(right: 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 140,
-            decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(12)),
-            child: const Center(child: Icon(Icons.photo, color: Colors.grey)),
-          ),
-          const SizedBox(height: 8),
-          Text(tag, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold), maxLines: 1),
-        ],
-      ),
-    );
-  }
-
-  // 6. 메뉴 아이콘 빌더
-  Widget _buildMenuIcon(BuildContext context, IconData icon, String label, Color color, String route) {
-    return InkWell(
+  // 카테고리 아이템 빌더
+  Widget _buildCatItem(BuildContext context, IconData icon, String label, String route) {
+    return GestureDetector(
       onTap: () => Navigator.pushNamed(context, route),
       child: Column(
         children: [
-          Icon(icon, size: 32, color: color),
-          const SizedBox(height: 5),
-          Text(label, style: const TextStyle(fontSize: 11), textAlign: TextAlign.center),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(icon, color: const Color(0xFFE61919), size: 30),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
         ],
       ),
     );
   }
 
-  // 7. 이벤트 배너
-  Widget _buildEventBanner() {
-    return Container(
-      margin: const EdgeInsets.all(20),
-      height: 80,
-      decoration: BoxDecoration(color: Colors.pink[50], borderRadius: BorderRadius.circular(12)),
-      child: const Center(
-        child: Text("최대 10% 할인 국내숙소 쿠폰팩", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+  // 서비스 메뉴 섹션 (재현님 파트)
+  Widget _buildServiceMenuSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text("✨ 추천 서비스",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 15),
+
+          _buildMenuButton(context, Icons.near_me, '지금 여기 (주변검색)', '/nearby'),
+          _buildMenuButton(context, Icons.forum, '커뮤니티 (게시판)', '/community'),
+        ],
       ),
     );
   }
 
-  // 8. 하단 내비게이션 바
-  Widget _buildBottomNav() {
+  // 메뉴 버튼 빌더
+  Widget _buildMenuButton(BuildContext context, IconData icon, String label, String route) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: OutlinedButton(
+        onPressed: () => Navigator.pushNamed(context, route),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+          side: BorderSide(color: Colors.grey[200]!),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          alignment: Alignment.centerLeft,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.grey[700], size: 22),
+            const SizedBox(width: 15),
+            Text(label, style: const TextStyle(color: Colors.black87, fontSize: 15)),
+            const Spacer(),
+            const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 하단 네비게이션 바
+  Widget _buildBottomNav(BuildContext context) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
-      selectedItemColor: Colors.black,
+      selectedItemColor: const Color(0xFFE61919),
       unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true,
+      currentIndex: 0,
+      onTap: (index) {
+        if (index == 4) {
+          Navigator.pushNamed(context, '/mypage');
+        }
+      },
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.confirmation_number_outlined), label: "혜택 모음"),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: "홈"),
         BottomNavigationBarItem(icon: Icon(Icons.search), label: "검색"),
-        BottomNavigationBarItem(icon: Icon(Icons.map_outlined), label: "주변"),
-        BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: "찜 목록"),
-        BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: "내 정보"),
+        BottomNavigationBarItem(icon: Icon(Icons.location_on), label: "내주변"),
+        BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: "찜"),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: "내정보"),
       ],
     );
   }
