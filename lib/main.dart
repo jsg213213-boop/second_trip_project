@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+<<<<<<< HEAD
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'loging/screens/list/accommodation_list_screen.dart';
@@ -73,4 +74,28 @@ class MyApp extends StatelessWidget {
       }, // routes 맵 닫기
     ); // <- 여기에 소괄호 ')'를 넣어서 MaterialApp 위젯을 닫아주세요!
   }
+=======
+import 'package:provider/provider.dart';
+import 'package:second_trip_project/screen/RoutingScreen.dart';
+
+import 'car/controller/calendar_controller.dart';
+import 'car/controller/rent_comp_controller.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => RentCompController(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CalendarController(),
+        ),
+      ],
+      child: const RoutingScreen(),
+    ),
+  );
+>>>>>>> middle
 }

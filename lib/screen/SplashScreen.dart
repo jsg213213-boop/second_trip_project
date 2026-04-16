@@ -1,6 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-// stf 생성하는 방법에 대해서 기억하기.
+import 'package:flutter/material.dart';
+// Future.delayed를 사용하기 위해 dart:async를 임포트합니다.
+import 'dart:async';
+
+import 'MainScreen.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -12,33 +17,34 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // 3초 후 메인 화면으로 이동 (뒤로가기 불가)
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, '/test_main');
+    // 2초 후에 메인 화면(예: HomeScreen)으로 이동합니다.
+    Timer(const Duration(seconds: 2), () {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          // 'HomeScreen()' 부분은 실제 프로젝트의 메인 화면 위젯으로 변경해야 합니다.
+          builder: (context) => const MainScreen(),
+        ),
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // 이미지가 들어있는 AssetImage 객체를 생성합니다.
+    // 프로젝트 루트의 assets/logo.png 경로에 이미지가 있어야 합니다.
+    const image = AssetImage('assets/images/logo.png');
+
     return Scaffold(
-      body: SafeArea(
+      backgroundColor: Colors.white, // 배경을 흰색으로 설정
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Center(child: Text('환영합니다!',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold))),
-            const SizedBox(height: 20),
-            Center(
-                // child: FlutterLogo(size: 100)
-                child: Image.asset(
-                  'assets/images/bug.jpg',
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.contain,
-                ),
+            // 이미지를 표시하는 위젯입니다.
+            const Image(
+              image: image,
+              width: 150, // 로고 크기를 조절합니다.
             ),
-            const SizedBox(height: 20),
-            const Center(child: CircularProgressIndicator()),
           ],
         ),
       ),
