@@ -1,7 +1,48 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
-class MainScreen extends StatelessWidget {
+class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  late PageController _pageController = PageController();
+  Timer? _timer;
+  int _currentPage = 0;
+
+  final List<String> _imgList = [
+    'assets/images/main_thumbnail5.png',
+    'assets/images/main_thumbnail4.png',
+    'assets/images/main_thumbnail2.png',
+    'assets/images/main_thumbnail3.png',
+    'assets/images/main_thumbnail1.png',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // 이제 오류 없이 정상적으로 초기화 가능
+    _pageController = PageController(initialPage: 5000);
+
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_pageController.hasClients) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,17 +52,17 @@ class MainScreen extends StatelessWidget {
       body: SafeArea(
         child: ListView(
           children: [
-            // 1. 상단 비주얼 배너 영역
+            // 1. 상단 비주얼 배너 영역 (슬라이더)
             _buildHeaderImage(),
 
             const Divider(thickness: 8, color: Color(0xFFF5F5F5)),
 
-            // 2. 메인 카테고리 섹션 (숙소, 항공, 패키지, 렌터카)
+            // 2. 메인 카테고리 섹션
             _buildMainCategoryGrid(context),
 
             const Divider(thickness: 8, color: Color(0xFFF5F5F5)),
 
-            // 3. 서비스 메뉴 섹션 (재현님 담당 파트 중심)
+            // 3. 서비스 메뉴 섹션
             _buildServiceMenuSection(context),
 
             const SizedBox(height: 30),
@@ -32,21 +73,21 @@ class MainScreen extends StatelessWidget {
     );
   }
 
-  // 앱바 구성: 로그인/회원가입 버튼 추가
+  // 앱바 구성
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
-      title: const Text(
-        '여기어때',
-        style: TextStyle(
-          color: Color(0xFFE61919),
-          fontWeight: FontWeight.bold,
-          fontSize: 24,
+      title: Image.asset(
+        'assets/images/logo.png', // 로고 이미지 경로
+        height: 30, // 로고 높이 조절 (앱바 크기에 맞춰 적절히 조정하세요)
+        fit: BoxFit.contain, // 이미지가 비율을 유지하며 영역 안에 들어가도록 설정
+        errorBuilder: (context, error, stackTrace) => const Text(
+          '로고 없음', // 이미지를 로드할 수 없을 때 표시할 대체 텍스트
+          style: TextStyle(color: Colors.red, fontSize: 12),
         ),
       ),
       actions: [
-        // 상단 로그인/회원가입 버튼 (지효님 파트 연결)
         TextButton(
           onPressed: () => Navigator.pushNamed(context, '/login'),
           child: const Text(
@@ -54,7 +95,7 @@ class MainScreen extends StatelessWidget {
             style: TextStyle(
               color: Colors.blueAccent,
               fontWeight: FontWeight.w600,
-              fontSize: 14,
+              fontSize: 13,
             ),
           ),
         ),
@@ -66,34 +107,32 @@ class MainScreen extends StatelessWidget {
     );
   }
 
-  // 헤더 이미지
+  // 헤더 이미지 슬라이더
   Widget _buildHeaderImage() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      child: Center(
-        child: Image.asset(
-          'assets/images/logo.png',
-          width: double.infinity,
-          height: 100,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
-            height: 200,
-            color: Colors.grey[200],
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.image, size: 50, color: Colors.grey),
-                Text("이미지를 찾을 수 없습니다", style: TextStyle(fontSize: 12)),
-              ],
+    return SizedBox(
+      height: 230,
+      child: PageView.builder(
+        controller: _pageController,
+        onPageChanged: (index) => setState(() => _currentPage = index),
+        itemCount: 10000,
+        itemBuilder: (context, index) {
+          final itemIndex = index % _imgList.length;
+          return Image.asset(
+            _imgList[itemIndex],
+            width: double.infinity,
+            height: 230,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              color: Colors.grey[200],
+              child: const Center(child: Icon(Icons.image, size: 50, color: Colors.grey)),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 
-  // 메인 카테고리 그리드 (숙소, 항공, 패키지, 렌터카)
+  // 메인 카테고리 그리드
   Widget _buildMainCategoryGrid(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
@@ -104,14 +143,13 @@ class MainScreen extends StatelessWidget {
         children: [
           _buildCatItem(context, Icons.home_work, "숙소", '/hotel'),
           _buildCatItem(context, Icons.flight, "항공", '/flights'),
-          _buildCatItem(context, Icons.inventory_2, "패키지", '/package_list'),
           _buildCatItem(context, Icons.directions_car, "렌터카", '/rent_car'),
+          _buildCatItem(context, Icons.inventory_2, "패키지", '/package_list'),
         ],
       ),
     );
   }
 
-  // 카테고리 아이템 빌더
   Widget _buildCatItem(BuildContext context, IconData icon, String label, String route) {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, route),
@@ -132,7 +170,7 @@ class MainScreen extends StatelessWidget {
     );
   }
 
-  // 서비스 메뉴 섹션 (재현님 파트)
+  // 서비스 메뉴 섹션
   Widget _buildServiceMenuSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -142,7 +180,6 @@ class MainScreen extends StatelessWidget {
           const Text("✨ 추천 서비스",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 15),
-
           _buildMenuButton(context, Icons.near_me, '지금 여기 (주변검색)', '/nearby'),
           _buildMenuButton(context, Icons.forum, '커뮤니티 (게시판)', '/community'),
         ],
@@ -150,7 +187,6 @@ class MainScreen extends StatelessWidget {
     );
   }
 
-  // 메뉴 버튼 빌더
   Widget _buildMenuButton(BuildContext context, IconData icon, String label, String route) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
