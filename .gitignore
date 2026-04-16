@@ -44,4 +44,17 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-.env
+# iOS
+ios/Podfile
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+
+# macOS
+macos/Podfile
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+**/macos/Flutter/ephemeral/
+
+ios/Flutter/Env.xcconfig
