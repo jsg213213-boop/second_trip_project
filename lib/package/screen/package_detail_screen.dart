@@ -7,6 +7,7 @@ import '../model/package_item.dart';
 
 class PackageDetailScreen extends StatefulWidget {
 
+  //단위 테스트용 변수 추가
   static bool isTesting = false;
 
   final PackageItem item;
@@ -28,6 +29,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
     );
   }
 
+  //테스트 전용 코드(주석 안해도됨)
   Widget _buildThumbnail(String url) {
     if (PackageDetailScreen.isTesting) {
       return Container(height: 250, color: Colors.grey);
