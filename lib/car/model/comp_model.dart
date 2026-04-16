@@ -17,17 +17,15 @@ class CompModel {
     this.phone
   });
 
-  static int _idCounter = 0;
-
   factory CompModel.fromJson(Map<String, dynamic> json) {
     return CompModel(
-      id: ++_idCounter,
-      name: json['entrpsNm'],
-      road: json['rdnmadr'],
-      address: json['lnmadr'],
-      la: json['latitude'],
-      lo: json['longitude'],
-      phone: json['phoneNumber'],
+      id: json['id'],
+      name: json['name'],
+      road: json['roadAddress'],
+      address: json['address'],
+      la: json['latitude']?.toString(),
+      lo: json['longitude']?.toString(),
+      phone: json['phone'],
     );
   }
 }
