@@ -1,16 +1,18 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MemberService {
   // 에뮬레이터 접속 주소 (실제 기기라면 PC IP로 바꿔야 해!)
-  static const String baseUrl = 'http://10.0.2.2:8080/api/member';
+  static String get baseUrl => dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:8080';
 
   // ⭐ 로그인: 성공 시 로컬 저장소에 상태 저장까지 완료!
   Future<Map<String, dynamic>?> login(String mid, String mpw) async {
     try {
+      final url = Uri.parse('$baseUrl/api/member/login'); // 경로 확인 필요!
       final response = await http.post(
-        Uri.parse('$baseUrl/login'),
+        url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'mid': mid, 'mpw': mpw}),
       );
@@ -41,12 +43,16 @@ class MemberService {
   // ⭐ 회원가입: 서버에 유저 정보 전송
   Future<bool> register(Map<String, String> userData) async {
     try {
+      final url = Uri.parse('$baseUrl/api/member/register'); // 경로 수정!
+      print("회원가입 요청 시도: $url"); // 로그 추가 (어디로 보내는지 확인)
+
       final response = await http.post(
-        Uri.parse('$baseUrl/register'),
+        url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(userData),
       );
 
+      print("회원가입 응답 코드: ${response.statusCode}"); // 응답 코드 확인
       return response.statusCode == 200;
     } catch (e) {
       print('회원가입 에러: $e');

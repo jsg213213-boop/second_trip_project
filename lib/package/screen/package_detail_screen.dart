@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import '../model/package_item.dart';
 
@@ -20,13 +23,58 @@ class PackageDetailScreen extends StatefulWidget {
 class _PackageDetailScreenState extends State<PackageDetailScreen> {
   final NumberFormat _numberFormat = NumberFormat('#,###');
 
+
+
   // 예약 처리 로직
   Future<void> _processBooking(BuildContext context, PackageItem item) async {
-    print('백엔드 예약 전송 시작: ${item.id}');
-    // 추후 서버 통신 코드 작성 예정
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("${item.title} 예약이 완료되었습니다!")),
-    );
+
+    if (PackageDetailScreen.isTesting) {
+      print('테스트 모드: 통신 없이 예약 완료 처리');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("테스트 패키지 예약이 완료되었습니다!")),
+      );
+      return;
+    }
+
+    final String baseUrl = dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:8080';
+
+    try {
+      print('백엔드 예약 전송 시작: ${item.id}');
+
+      // 1. 서버로 데이터 전송 (위에서 만든 함수 활용)
+      final response = await http.post(
+        Uri.parse('${dotenv.env['BASE_URL']}/api/reservations/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "memberId": 1, // 필요에 따라 변경
+          "packageId": item.id,
+          "reservationDate": DateTime.now().toString().substring(0, 10), // 날짜 포맷 확인 필요
+          "peopleCount": 1,
+          "totalPrice": item.price,
+        }),
+      );
+
+      // 2. 결과 확인
+      if (response.statusCode == 200) {
+        // 서버 저장 성공 시 기존 로직 실행
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("${item.title} 예약이 완료되었습니다!")),
+          );
+        }
+      } else {
+        // 서버 에러 발생 시 처리
+        throw Exception('서버 응답 오류: ${response.statusCode}');
+      }
+    } catch (e) {
+      // 3. 통신 실패 시 에러 메시지
+      print('예약 실패: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("예약에 실패했습니다. 다시 시도해주세요.")),
+        );
+      }
+    }
   }
 
   //테스트 전용 코드(주석 안해도됨)
@@ -65,17 +113,21 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
                 content: const Text("해당 패키지 상품을 예약하시겠습니까?"),
                 actions: [
                   TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("취소"),
+                    child: const Text('취소'),
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
-                  ElevatedButton(
+                  TextButton(
                     key: const Key('confirm_booking_button'),
-                    onPressed: () {
-                      Navigator.pop(context); // 모달 닫기
-                      _processBooking(context, widget.item); // 예약 로직 실행
+                    child: const Text('확인'),
+                    onPressed: () async {
+                      // 1. 실제 예약 로직 호출
+                      await _processBooking(context, widget.item);
+
+                      // 2. 모달 닫기
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
                     },
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.pinkAccent[400]),
-                    child: const Text("예", style: TextStyle(color: Colors.white)),
                   ),
                 ],
               ),

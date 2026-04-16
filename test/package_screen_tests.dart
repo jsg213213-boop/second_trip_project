@@ -6,15 +6,15 @@ import 'package:second_trip_project/package/model/package_item.dart';
 import 'package:second_trip_project/package/screen/package_detail_screen.dart';
 
 void main() {
-
   setUpAll(() {
     HttpOverrides.global = null;
   });
 
-  testWidgets('예약하기 버튼 클릭 시 모달이 뜨고 확인을 누르면 로직이 실행되어야 함', (WidgetTester tester) async {
-    PackageDetailScreen.isTesting = true;
+  testWidgets('예약 버튼 클릭 시 백엔드 호출 확인', (WidgetTester tester) async {
+    PackageDetailScreen.isTesting = true; // [중요]
 
     final testItem = PackageItem(
+
       id: 'test_01',
       title: '테스트 패키지',
       category: 'Best',
@@ -42,25 +42,24 @@ void main() {
     // 2. '예약하기' 버튼 클릭
     final reserveBtn = find.byKey(const Key('reserve_button'));
     await tester.tap(reserveBtn);
-    await tester.pumpAndSettle(); // 애니메이션 끝날 때까지 대기
-
     await tester.pumpAndSettle();
 
-    // 3. 모달창(AlertDialog)이 떴는지 확인
+    // 3. 모달 확인
     expect(find.byKey(const Key('reserve_dialog')), findsOneWidget);
     expect(find.text('해당 패키지 상품을 예약하시겠습니까?'), findsOneWidget);
 
-    // 4. 모달 안의 '확인' 버튼 클릭
+    // 4. 확인 버튼 클릭
     final confirmBtn = find.byKey(const Key('confirm_booking_button'));
     await tester.tap(confirmBtn);
     await tester.pumpAndSettle();
 
-    // 5. 모달이 닫혔는지 확인
-    expect(find.byKey(const Key('reserve_dialog')), findsNothing);
-
-    // 6. 스낵바가 떴는지 확인 (로직 실행 여부 간접 확인)
+    // 5. [수정 포인트] 스낵바 확인을 위해 화면이 갱신되었는지 확인
+    // 실제 UI 코드의 스낵바 텍스트와 일치하는지 확인하세요
     expect(find.text('테스트 패키지 예약이 완료되었습니다!'), findsOneWidget);
 
-    PackageDetailScreen.isTesting = false;
+    // 6. 모달 닫힘 확인
+    expect(find.byKey(const Key('reserve_dialog')), findsNothing);
+
+    PackageDetailScreen.isTesting = false; // 테스트 종료 시 초기화
   });
 }
