@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-<<<<<<< HEAD
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:second_trip_project/screen/ChangePasswordScreen.dart';
+import 'package:second_trip_project/screen/EditProfileScreen.dart';
+import 'package:second_trip_project/screen/InquiryScreen.dart';
+import 'package:second_trip_project/screen/MainScreen.dart';
+import 'package:second_trip_project/screen/MyPageScreen.dart';
+import 'package:second_trip_project/screen/MyPostsScreen.dart';
+import 'package:second_trip_project/screen/SplashScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'loging/screens/list/accommodation_list_screen.dart';
-import 'loging/theme/app_theme.dart';
 import 'providers/accommodation_providers.dart';
 
 // 변경
@@ -46,7 +51,7 @@ class MyApp extends StatelessWidget {
       // 3. 경로 등록 (이걸 해둬야 톱니바퀴 눌렀을 때 이동이 돼!)
       routes: {
         '/mypage': (context) => const MyPageScreen(),
-        '/edit_profile': (context) => const EditProfileScreen(),
+        // '/edit_profile': (context) => const EditProfileScreen(),
         '/change_password': (context) => const ChangePasswordScreen(),
         '/my_posts': (context) => const MyPostsScreen(),
         '/inquiry': (context) => const InquiryScreen(),
@@ -74,28 +79,4 @@ class MyApp extends StatelessWidget {
       }, // routes 맵 닫기
     ); // <- 여기에 소괄호 ')'를 넣어서 MaterialApp 위젯을 닫아주세요!
   }
-=======
-import 'package:provider/provider.dart';
-import 'package:second_trip_project/screen/RoutingScreen.dart';
-
-import 'car/controller/calendar_controller.dart';
-import 'car/controller/rent_comp_controller.dart';
-
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => RentCompController(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => CalendarController(),
-        ),
-      ],
-      child: const RoutingScreen(),
-    ),
-  );
->>>>>>> middle
 }

@@ -39,12 +39,8 @@ class RoutingScreen extends StatelessWidget {
         '/inquiry': (context) => const InquiryScreen(),
         '/car_rent': (context) => const TableCalendarScreen(),
         '/car_rent_home': (context) => const CarRentHomeScreen(),
-<<<<<<< HEAD
-// 변경
         '/hotel': (context) => const AccommodationListScreen(),
         '/motel': (context) => const AccommodationListScreen(),
-
-=======
 
         // --- 연습용 및 숙소 카테고리 라우트 ---
         '/publicDataTest': (context) =>
@@ -59,7 +55,6 @@ class RoutingScreen extends StatelessWidget {
             const Scaffold(body: Center(child: Text('호텔·리조트 화면'))),
         '/motel': (context) =>
             const Scaffold(body: Center(child: Text('모텔 화면'))),
->>>>>>> middle
       },
     );
   }
