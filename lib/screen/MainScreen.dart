@@ -114,7 +114,7 @@ class MainScreen extends StatelessWidget {
           _buildMenuIcon(context, Icons.terrain, "캠핑·글램핑", const Color(0xFF4CAF50), '/camping'),
           _buildMenuIcon(context, Icons.home_work, "홈&빌라", const Color(0xFFFF8A65), '/villa'),
           _buildMenuIcon(context, Icons.bed, "게하·한옥", const Color(0xFF8D6E63), '/guesthouse'),
-          _buildMenuIcon(context, Icons.directions_car, "렌터카", const Color(0xFFFF5252), '/rentcar'),
+          _buildMenuIcon(context, Icons.directions_car, "렌터카", const Color(0xFFFF5252), '/car_rent_home'),
           _buildMenuIcon(context, Icons.card_travel, "패키지 여행", const Color(0xFFFFAB40), '/package'),
           _buildMenuIcon(context, Icons.airplane_ticket, "항공+숙소", const Color(0xFF448AFF), '/flightHotel'),
           _buildMenuIcon(context, Icons.flight, "항공", const Color(0xFFFF5252), '/flight'),

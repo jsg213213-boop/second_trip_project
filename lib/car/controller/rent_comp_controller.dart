@@ -13,10 +13,51 @@ class RentCompController with ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
 
+  String? _selectedRegion;
+
   Map<String, List<CompModel>> get regionItems => _regionItems;
   List<String> get regions => _regionItems.keys.toList();
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  String? get selectedRegion => _selectedRegion;
+
+  /// 선택된 지역의 업체 목록
+  List<CompModel> get filteredItems =>
+      _selectedRegion != null ? (_regionItems[_selectedRegion] ?? []) : [];
+
+  void setRegion(String region) {
+    _selectedRegion = region;
+    notifyListeners();
+  }
+
+  /// 서버에서 지역별 렌트카 회사 목록 조회
+  Future<void> fetchByRegion(String region) async {
+    if (_isLoading) return;
+    _selectedRegion = region;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final uri = Uri.http('10.0.2.2:8080', '/rent/companies', {'region': region});
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = jsonDecode(utf8.decode(response.bodyBytes));
+        final items = jsonList.map((e) => CompModel.fromJson(e)).toList();
+        _regionItems[region] = items;
+        debugPrint('$region 렌트카 업체 ${items.length}개 로드');
+      } else {
+        _errorMessage = '서버 오류: ${response.statusCode}';
+      }
+    } catch (e) {
+      _errorMessage = '네트워크 오류: $e';
+      debugPrint('데이터 로딩 실패: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
 
   // 주소에서 첫 번째 단어 추출 (예: "부산광역시 해운대구 ..." → "부산광역시")
   static const _exceptionRegions = {'충청북도', '충청남도', '전라북도', '전라남도', '경상북도', '경상남도'};
@@ -36,6 +77,8 @@ class RentCompController with ChangeNotifier {
 
   Future<void> fetchInitial() async {
     if (_isLoading) return;
+    // 이미 데이터가 있으면 다시 안 불러옴
+    if (_allItems.isNotEmpty) return;
     _isLoading = true;
     _errorMessage = null;
     _allItems.clear();

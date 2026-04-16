@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controller/calendar_controller.dart';
+import '../controller/rent_comp_controller.dart';
+import 'car_rent_screen.dart';
 import 'table_calendar_screen.dart';
 
 class CarRentHomeScreen extends StatefulWidget {
@@ -97,14 +99,12 @@ class _CarRentHomeScreenState extends State<CarRentHomeScreen> {
                 onPressed: (_selectedRegion != null &&
                         calendar.rangeStart != null &&
                         calendar.rangeEnd != null)
-                    ? () {
-                        // TODO: 다음 화면으로 이동
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              '$_selectedRegion / ${_formatDate(calendar.rangeStart!)} ~ ${_formatDate(calendar.rangeEnd!)}',
-                            ),
-                          ),
+                    ? () async {
+                        await context.read<RentCompController>().fetchByRegion(_selectedRegion!);
+                        if (!context.mounted) return;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const CarRentScreen()),
                         );
                       }
                     : null,
