@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'MyPageScreen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -211,22 +213,34 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // 하단 네비게이션 바
+  // ⭐ [최종 수정] 하단 네비게이션 바 로직
   Widget _buildBottomNav(BuildContext context) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       selectedItemColor: const Color(0xFFF7323F),
       unselectedItemColor: Colors.grey,
       currentIndex: 0,
-      onTap: (index) {
+      onTap: (index) async { // ⭐ async 추가
         if (index == 4) {
-          bool isLoggedIn = false;
+          // 1. 저장소에서 실시간 로그인 상태 확인
+          final SharedPreferences prefs = await SharedPreferences.getInstance();
+          bool loginStatus = prefs.getBool('isLoggedIn') ?? false;
 
-          if (isLoggedIn) {
-            // 로그인 상태면 원래 마이페이지로
-            Navigator.pushNamed(context, '/mypage');
+          if (loginStatus) {
+            // 2. 로그인 성공 상태: 저장된 이름과 이메일 가지고 마이페이지 이동
+            String name = prefs.getString('userName') ?? "사용자";
+            String email = prefs.getString('userEmail') ?? "";
+
+            if (!mounted) return;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MyPageScreen(userName: name, userEmail: email),
+              ),
+            );
           } else {
-            // 로그아웃 상태면 누나가 만든 '여기어때 레드' 버튼 화면으로!
+            // 3. 로그아웃 상태: 로그아웃 전용 화면으로 이동
+            if (!mounted) return;
             Navigator.pushNamed(context, '/logout_mypage');
           }
         }
