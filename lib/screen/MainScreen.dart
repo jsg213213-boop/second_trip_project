@@ -15,6 +15,10 @@ class _MainScreenState extends State<MainScreen> {
   Timer? _timer;
   int _currentPage = 0;
 
+  // ⭐ 로그인 상태와 사용자 이름을 담을 변수
+  bool isLoggedIn = false;
+  String userName = "";
+
   final List<String> _imgList = [
     'assets/images/main_thumbnail5.png',
     'assets/images/main_thumbnail4.png',
@@ -26,9 +30,9 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    // 이제 오류 없이 정상적으로 초기화 가능
-    _pageController = PageController(initialPage: 5000);
+    _checkLoginStatus(); // ⭐ 앱 시작 시 로그인 상태 확인
 
+    _pageController = PageController(initialPage: 5000);
     _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (_pageController.hasClients) {
         _pageController.nextPage(
@@ -36,6 +40,15 @@ class _MainScreenState extends State<MainScreen> {
           curve: Curves.easeInOut,
         );
       }
+    });
+  }
+
+  // ⭐ 저장소에서 로그인 정보를 가져와 화면을 갱신하는 함수
+  Future<void> _checkLoginStatus() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+      userName = prefs.getString('userName') ?? "";
     });
   }
 
@@ -54,19 +67,11 @@ class _MainScreenState extends State<MainScreen> {
       body: SafeArea(
         child: ListView(
           children: [
-            // 1. 상단 비주얼 배너 영역 (슬라이더)
             _buildHeaderImage(),
-
             const Divider(thickness: 8, color: Color(0xFFF5F5F5)),
-
-            // 2. 메인 카테고리 섹션
             _buildMainCategoryGrid(context),
-
             const Divider(thickness: 8, color: Color(0xFFF5F5F5)),
-
-            // 3. 서비스 메뉴 섹션
             _buildServiceMenuSection(context),
-
             const SizedBox(height: 30),
           ],
         ),
@@ -75,27 +80,46 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // 앱바 구성
+  // ⭐ 앱바 구성 (로그인 상태 반영)
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
       title: Image.asset(
-        'assets/images/logo.png', // 로고 이미지 경로
-        height: 30, // 로고 높이 조절 (앱바 크기에 맞춰 적절히 조정하세요)
-        fit: BoxFit.contain, // 이미지가 비율을 유지하며 영역 안에 들어가도록 설정
+        'assets/images/logo.png',
+        height: 30,
+        fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) => const Text(
-          '로고 없음', // 이미지를 로드할 수 없을 때 표시할 대체 텍스트
-          style: TextStyle(color: Colors.red, fontSize: 12),
+          'Travel-Hub',
+          style: TextStyle(color: Color(0xFFF7323F), fontWeight: FontWeight.bold),
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pushNamed(context, '/login'),
+        // 💡 로그인 상태에 따라 다른 위젯 표시
+        isLoggedIn
+            ? Center(
+          child: Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Text(
+              '$userName님, 안녕하세요!',
+              style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        )
+            : TextButton(
+          onPressed: () async {
+            // 로그인 화면에 갔다 오면 상태를 다시 체크함
+            await Navigator.pushNamed(context, '/login');
+            _checkLoginStatus();
+          },
           child: const Text(
             '로그인/회원가입',
             style: TextStyle(
-              color: Colors.blueAccent,
+              color: Color(0xFFF7323F), // 여기어때 레드 컬러
               fontWeight: FontWeight.w600,
               fontSize: 13,
             ),
@@ -109,7 +133,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // 헤더 이미지 슬라이더
   Widget _buildHeaderImage() {
     return SizedBox(
       height: 230,
@@ -134,7 +157,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // 메인 카테고리 그리드
   Widget _buildMainCategoryGrid(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
@@ -160,10 +182,10 @@ class _MainScreenState extends State<MainScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.05),
+              color: const Color(0xFFF7323F).withOpacity(0.05),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Icon(icon, color: const Color(0xFFE61919), size: 30),
+            child: Icon(icon, color: const Color(0xFFF7323F), size: 30),
           ),
           const SizedBox(height: 8),
           Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
@@ -172,14 +194,13 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // 서비스 메뉴 섹션
   Widget _buildServiceMenuSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text("✨ 추천 서비스",
+          const Text("추천 서비스",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 15),
           _buildMenuButton(context, Icons.near_me, '지금 여기 (주변검색)', '/nearby'),
@@ -213,35 +234,34 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // ⭐ [최종 수정] 하단 네비게이션 바 로직
   Widget _buildBottomNav(BuildContext context) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       selectedItemColor: const Color(0xFFF7323F),
       unselectedItemColor: Colors.grey,
       currentIndex: 0,
-      onTap: (index) async { // ⭐ async 추가
+      onTap: (index) async {
         if (index == 4) {
-          // 1. 저장소에서 실시간 로그인 상태 확인
           final SharedPreferences prefs = await SharedPreferences.getInstance();
           bool loginStatus = prefs.getBool('isLoggedIn') ?? false;
 
           if (loginStatus) {
-            // 2. 로그인 성공 상태: 저장된 이름과 이메일 가지고 마이페이지 이동
             String name = prefs.getString('userName') ?? "사용자";
             String email = prefs.getString('userEmail') ?? "";
 
             if (!mounted) return;
-            Navigator.push(
+            // 마이페이지에 갔다가 돌아올 때도 상단 앱바 갱신을 위해 await 사용
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => MyPageScreen(userName: name, userEmail: email),
               ),
             );
+            _checkLoginStatus(); // 로그아웃하고 돌아올 수도 있으니 다시 체크!
           } else {
-            // 3. 로그아웃 상태: 로그아웃 전용 화면으로 이동
             if (!mounted) return;
-            Navigator.pushNamed(context, '/logout_mypage');
+            await Navigator.pushNamed(context, '/logout_mypage');
+            _checkLoginStatus();
           }
         }
       },
