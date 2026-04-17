@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // ⭐ 숫자 필터링을 위해 꼭 필요해!
 import '../services/member_service.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -20,7 +21,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   bool _isPasswordVisible = false;
   bool _isPasswordConfirmVisible = false;
-  bool _isEmailChecked = false; // ⭐ 중복확인을 통과했는지 체크하는 변수 추가
+  bool _isEmailChecked = false;
 
   final Color classicBlue = const Color(0xFFF7323F);
 
@@ -29,7 +30,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
         .hasMatch(email);
   }
 
-  // ⭐ 중복 확인 로직을 함수로 분리 (재사용을 위해)
   Future<void> _handleCheckDuplicate() async {
     String email = emailController.text.trim();
     if (email.isEmpty) {
@@ -165,14 +165,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Text('All-In-One 트래픽 플랫폼 서비스를 시작해보세요.', style: TextStyle(fontSize: 15, color: Colors.grey[600])),
                 const SizedBox(height: 40),
 
-                // 이메일 입력 + 중복확인 버튼
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: TextField(
                         controller: emailController,
-                        onChanged: (value) => setState(() => _isEmailChecked = false), // 이메일 수정하면 다시 체크하게
+                        onChanged: (value) => setState(() => _isEmailChecked = false),
                         keyboardType: TextInputType.emailAddress,
                         decoration: _buildAppleInputDecoration('이메일(아이디)', CupertinoIcons.mail),
                       ),
@@ -181,7 +180,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     SizedBox(
                       height: 56,
                       child: OutlinedButton(
-                        onPressed: _handleCheckDuplicate, // ⭐ 상단 버튼에 중복확인 연결
+                        onPressed: _handleCheckDuplicate,
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: _isEmailChecked ? Colors.blue : classicBlue),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -228,19 +227,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 18),
 
+                // ⭐ 전화번호 입력 부분 수정
                 TextField(
                   controller: phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: _buildAppleInputDecoration('전화번호', CupertinoIcons.phone),
+                  keyboardType: TextInputType.number, // 숫자 키보드 호출
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly, // 숫자 외 입력 원천 차단
+                    LengthLimitingTextInputFormatter(11),   // 11자리까지만 입력 가능
+                  ],
+                  decoration: _buildAppleInputDecoration('전화번호 (- 없이 숫자만)', CupertinoIcons.phone),
                 ),
                 const SizedBox(height: 40),
 
-                // ⭐ 하단 버튼을 '회원가입 하기'로 변경!
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _attemptSignUp, // ⭐ 회원가입 함수 실행!
+                    onPressed: _attemptSignUp,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: classicBlue,
                       foregroundColor: Colors.white,
