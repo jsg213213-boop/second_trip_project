@@ -240,8 +240,19 @@ class _MainScreenState extends State<MainScreen> {
       selectedItemColor: const Color(0xFFF7323F),
       unselectedItemColor: Colors.grey,
       currentIndex: 0,
+
       onTap: (index) async {
-        if (index == 4) {
+        if (index == 0) {
+          // 홈 버튼 클릭 시 로직 (필요 시)
+        } else if (index == 1) {
+          Navigator.pushNamed(context, '/search');
+        } else if (index == 2) {
+          Navigator.pushNamed(context, '/nearby');
+        } else if (index == 3) {
+          Navigator.pushNamed(context, '/favorite');
+        } else if (index == 4) {
+
+
           final SharedPreferences prefs = await SharedPreferences.getInstance();
           bool loginStatus = prefs.getBool('isLoggedIn') ?? false;
 

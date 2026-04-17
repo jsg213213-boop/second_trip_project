@@ -254,6 +254,8 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   _buildMenuItem(CupertinoIcons.chat_bubble_2, '1:1 문의 내역', onTap: () => Navigator.pushNamed(context, '/inquiry')),
                   _buildMenuItem(CupertinoIcons.info_circle, '고객센터', onTap: () {}),
                   _buildMenuItem(CupertinoIcons.square_arrow_right, '로그아웃', isLast: true, textColor: Colors.redAccent, onTap: () => _showLogoutDialog(context)),
+                  _buildMenuItem(CupertinoIcons.bell, '공지사항', onTap: () => Navigator.pushNamed(context, '/notice')
+                  ),
                 ],
               ),
             ),

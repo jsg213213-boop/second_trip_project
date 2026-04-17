@@ -25,6 +25,17 @@ import 'SignUpScreen.dart';
 import 'SplashScreen.dart';
 import 'LogoutMyPageScreen.dart';
 
+//공지사항 및 검색(재현)
+
+import 'package:second_trip_project/screen/TotalSearchScreen.dart';
+
+import 'package:second_trip_project/screen/CommunityDetailScreen.dart';
+import 'package:second_trip_project/screen/CommunityScreen.dart';
+import 'package:second_trip_project/screen/CommunityWriteScreen.dart';
+import 'package:second_trip_project/screen/NoticeDetailScreen.dart';
+import 'package:second_trip_project/screen/NoticeListScreen.dart';
+
+
 class RoutingScreen extends StatelessWidget {
   const RoutingScreen({super.key});
 
@@ -55,6 +66,16 @@ class RoutingScreen extends StatelessWidget {
         // [렌터카 - 태흔님]
         '/car_rent_home': (context) => const CarRentHomeScreen(),
         '/car_calendar': (context) => const TableCalendarScreen(),
+
+        // 검색 화면 경로 등록
+        '/search': (context) => const TotalSearchScreen(),
+
+        // 공지사항및 게시판
+        '/notice': (context) => const NoticeListScreen(),
+        '/notice_detail': (context) => const NoticeDetailScreen(),
+        '/community': (context) => const CommunityScreen(),
+        '/community_detail': (context) => const CommunityDetailScreen(),
+        '/community_write': (context) => const CommunityWriteScreen(),
 
         // [숙소 - 재욱님]
         '/hotel': (context) => const AccommodationListScreen(),
