@@ -20,16 +20,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   bool _isPasswordVisible = false;
   bool _isPasswordConfirmVisible = false;
+  bool _isEmailChecked = false; // ⭐ 중복확인을 통과했는지 체크하는 변수 추가
 
   final Color classicBlue = const Color(0xFFF7323F);
 
-  // ⭐ 이메일 형식을 체크하는 정규식 함수
   bool _isValidEmail(String email) {
     return RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
         .hasMatch(email);
   }
 
-  // ⭐ 회원가입 시도 함수
+  // ⭐ 중복 확인 로직을 함수로 분리 (재사용을 위해)
+  Future<void> _handleCheckDuplicate() async {
+    String email = emailController.text.trim();
+    if (email.isEmpty) {
+      _showSnackBar("이메일을 입력해주세요.");
+      return;
+    }
+    if (!_isValidEmail(email)) {
+      _showSnackBar("올바른 이메일 형식이 아닙니다.");
+      return;
+    }
+
+    bool isDuplicate = await _memberService.checkEmailDuplicate(email);
+
+    if (isDuplicate) {
+      setState(() => _isEmailChecked = false);
+      _showSnackBar("이미 사용 중인 이메일입니다.");
+    } else {
+      setState(() => _isEmailChecked = true);
+      _showSnackBar("사용 가능한 이메일입니다.", backgroundColor: Colors.blue);
+    }
+  }
+
   void _attemptSignUp() async {
     String email = emailController.text.trim();
     String name = nameController.text.trim();
@@ -37,25 +59,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
     String pwConfirm = passwordConfirmController.text;
     String phone = phoneController.text.trim();
 
-    // 1. 빈칸 체크
     if (email.isEmpty || name.isEmpty || pw.isEmpty || pwConfirm.isEmpty || phone.isEmpty) {
       _showSnackBar("모든 정보를 입력해주세요.");
       return;
     }
 
-    // 2. ⭐ 이메일 형식 체크 추가!
-    if (!_isValidEmail(email)) {
-      _showSnackBar("올바른 이메일 형식이 아닙니다.");
+    if (!_isEmailChecked) {
+      _showSnackBar("이메일 중복 확인을 먼저 진행해주세요.");
       return;
     }
 
-    // 3. 비밀번호 일치 확인
     if (pw != pwConfirm) {
       _showSnackBar("비밀번호가 일치하지 않습니다.");
       return;
     }
 
-    // 4. 서버로 데이터 전송
     Map<String, String> userData = {
       "mid": email,
       "mpw": pw,
@@ -147,13 +165,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Text('All-In-One 트래픽 플랫폼 서비스를 시작해보세요.', style: TextStyle(fontSize: 15, color: Colors.grey[600])),
                 const SizedBox(height: 40),
 
-                // 이메일 입력
+                // 이메일 입력 + 중복확인 버튼
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: TextField(
                         controller: emailController,
+                        onChanged: (value) => setState(() => _isEmailChecked = false), // 이메일 수정하면 다시 체크하게
                         keyboardType: TextInputType.emailAddress,
                         decoration: _buildAppleInputDecoration('이메일(아이디)', CupertinoIcons.mail),
                       ),
@@ -162,24 +181,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     SizedBox(
                       height: 56,
                       child: OutlinedButton(
-                        onPressed: () {
-                          // ⭐ 중복확인 버튼 누를 때도 형식 체크!
-                          String email = emailController.text.trim();
-                          if (email.isEmpty) {
-                            _showSnackBar("이메일을 입력해주세요.");
-                          } else if (!_isValidEmail(email)) {
-                            _showSnackBar("올바른 이메일 형식이 아닙니다. (예: user@mail.com)");
-                          } else {
-                            // TODO: 나중에 중복확인 API 연결
-                            _showSnackBar("사용 가능한 이메일입니다.", backgroundColor: classicBlue);
-                          }
-                        },
+                        onPressed: _handleCheckDuplicate, // ⭐ 상단 버튼에 중복확인 연결
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: classicBlue),
+                          side: BorderSide(color: _isEmailChecked ? Colors.blue : classicBlue),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          foregroundColor: classicBlue,
+                          foregroundColor: _isEmailChecked ? Colors.blue : classicBlue,
                         ),
-                        child: const Text('중복확인', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text(_isEmailChecked ? '확인완료' : '중복확인', style: const TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -227,35 +235,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 40),
 
+                // ⭐ 하단 버튼을 '회원가입 하기'로 변경!
                 SizedBox(
+                  width: double.infinity,
                   height: 56,
-                  child: OutlinedButton(
-                    onPressed: () async { // ⭐ 1. async 추가
-                      String email = emailController.text.trim();
-
-                      if (email.isEmpty) {
-                        _showSnackBar("이메일을 입력해주세요.");
-                      } else if (!_isValidEmail(email)) {
-                        _showSnackBar("올바른 이메일 형식이 아닙니다. (예: user@mail.com)");
-                      } else {
-                        // ⭐ 2. 진짜 서버한테 물어보기!
-                        bool isDuplicate = await _memberService.checkEmailDuplicate(email);
-
-                        if (isDuplicate) {
-                          // 중복된 경우
-                          _showSnackBar("이미 사용 중인 이메일입니다. 다른 이메일을 입력해주세요.");
-                        } else {
-                          // 중복이 아닌 경우
-                          _showSnackBar("사용 가능한 이메일입니다.", backgroundColor: classicBlue);
-                        }
-                      }
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: classicBlue),
+                  child: ElevatedButton(
+                    onPressed: _attemptSignUp, // ⭐ 회원가입 함수 실행!
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: classicBlue,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      foregroundColor: classicBlue,
                     ),
-                    child: const Text('중복확인', style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: const Text('회원가입 하기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   ),
                 ),
                 const SizedBox(height: 20),
