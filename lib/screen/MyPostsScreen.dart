@@ -9,7 +9,7 @@ class MyPostsScreen extends StatefulWidget {
 }
 
 class _MyPostsScreenState extends State<MyPostsScreen> {
-  final Color classicBlue = const Color(0xFF004680);
+  final Color classicBlue = const Color(0xFFF7323F);
 
   // 1. 게시글 데이터 (content 필드 추가)
   List<Map<String, String>> myPosts = [

@@ -11,7 +11,7 @@ class InquiryScreen extends StatefulWidget {
 }
 
 class _InquiryScreenState extends State<InquiryScreen> {
-  final Color classicBlue = const Color(0xFF004680);
+  final Color classicBlue = const Color(0xFFF7323F);
 
   // 1. 문의 내역 데이터 (나중에 DB와 연동될 리스트)
   List<Map<String, String>> inquiries = [

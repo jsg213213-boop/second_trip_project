@@ -9,7 +9,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final Color classicBlue = const Color(0xFF004680);
+  final Color classicBlue = const Color(0xFFF7323F);
   final TextEditingController _emailController = TextEditingController();
 
   // ⭐ 임시 비밀번호 발송 함수

@@ -8,23 +8,40 @@ import 'WishlistScreen.dart';
 import 'EditProfileScreen.dart';
 
 class MyPageScreen extends StatefulWidget {
-  const MyPageScreen({super.key});
+  // ⭐ 데이터를 받기 위한 변수 선언
+  final String userName;
+  final String userEmail;
+
+  // ⭐ 생성자에서 데이터를 필수(required)로 받게 수정
+  const MyPageScreen({
+    super.key,
+    required this.userName,
+    required this.userEmail,
+  });
 
   @override
   State<MyPageScreen> createState() => _MyPageScreenState();
 }
 
 class _MyPageScreenState extends State<MyPageScreen> {
-  final Color classicBlue = const Color(0xFF004680);
+  final Color classicBlue = const Color(0xFFF7323F);
 
-  // 실시간 변경을 위해 관리되는 유저 데이터 변수들
-  String _userName = "박금동";
-  String _userPhone = "010-1234-5678";
-  String _userEmail = "jihyo@travelhub.com";
+  // ⭐ late 키워드를 써서 나중에 initState에서 초기화해줄게
+  late String _userName;
+  late String _userEmail;
+  String _userPhone = "010-1234-5678"; // 폰번호는 나중에 서버에서 더 가져오면 돼!
   File? _image;
   final ImagePicker _picker = ImagePicker();
 
-  // ⭐ 로그아웃 확인 다이얼로그 함수 추가
+  @override
+  void initState() {
+    super.initState();
+    // ⭐ 위젯이 생성될 때 넘겨받은(widget.xxx) 데이터를 상태 변수에 대입!
+    _userName = widget.userName;
+    _userEmail = widget.userEmail;
+  }
+
+  // 로그아웃 확인 다이얼로그
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -40,19 +57,13 @@ class _MyPageScreenState extends State<MyPageScreen> {
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // 다이얼로그 닫기
-                // 모든 화면 스택을 비우고 로그인 화면으로 이동
+                Navigator.pop(context);
                 Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
-
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('로그아웃 되었습니다.'),
-                    duration: Duration(seconds: 2),
-                  ),
+                  const SnackBar(content: Text('로그아웃 되었습니다.'), duration: Duration(seconds: 2)),
                 );
               },
-              child: Text('로그아웃',
-                  style: TextStyle(color: classicBlue, fontWeight: FontWeight.bold)),
+              child: Text('로그아웃', style: TextStyle(color: classicBlue, fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -60,14 +71,10 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  // 사진을 가져오는 함수
+  // 사진 가져오는 함수
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: source,
-        imageQuality: 80,
-      );
-
+      final XFile? pickedFile = await _picker.pickImage(source: source, imageQuality: 80);
       if (pickedFile != null) {
         setState(() {
           _image = File(pickedFile.path);
@@ -82,9 +89,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
   void _showProfileMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
         return SafeArea(
           child: Column(
@@ -98,26 +103,17 @@ class _MyPageScreenState extends State<MyPageScreen> {
               ListTile(
                 leading: const Icon(CupertinoIcons.photo),
                 title: const Text('앨범에서 선택'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
+                onTap: () { Navigator.pop(context); _pickImage(ImageSource.gallery); },
               ),
               ListTile(
                 leading: const Icon(CupertinoIcons.camera),
                 title: const Text('사진 촬영'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
+                onTap: () { Navigator.pop(context); _pickImage(ImageSource.camera); },
               ),
               ListTile(
                 leading: const Icon(CupertinoIcons.trash, color: Colors.red),
                 title: const Text('기본 이미지로 변경', style: TextStyle(color: Colors.red)),
-                onTap: () {
-                  setState(() => _image = null);
-                  Navigator.pop(context);
-                },
+                onTap: () { setState(() => _image = null); Navigator.pop(context); },
               ),
               const SizedBox(height: 10),
             ],
@@ -136,12 +132,18 @@ class _MyPageScreenState extends State<MyPageScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        automaticallyImplyLeading: false,
+        // ⭐ 이 부분을 수정했어!
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.back, color: Colors.black), // 누나가 그린 화살표 아이콘
+          onPressed: () {
+            Navigator.pop(context); // 누르면 이전 화면(홈/메인)으로 돌아가기
+          },
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. 프로필 섹션
+            // 1. 프로필 섹션 (데이터 연동 완료!)
             Container(
               color: Colors.white,
               padding: const EdgeInsets.all(24.0),
@@ -163,17 +165,10 @@ class _MyPageScreenState extends State<MyPageScreen> {
                       Positioned(
                         right: 0,
                         bottom: 0,
-                        child: GestureDetector(
-                          onTap: () => _showProfileMenu(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.grey[200]!),
-                            ),
-                            child: Icon(CupertinoIcons.camera_fill, size: 12, color: Colors.grey[700]),
-                          ),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey[200]!)),
+                          child: Icon(CupertinoIcons.camera_fill, size: 12, color: Colors.grey[700]),
                         ),
                       ),
                     ],
@@ -182,8 +177,10 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // ⭐ 넘겨받은 이름 표시!
                       Text(_userName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
+                      // ⭐ 넘겨받은 이메일 표시!
                       Text(_userEmail, style: TextStyle(color: Colors.grey[600])),
                     ],
                   ),
@@ -201,7 +198,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
                           ),
                         ),
                       );
-
                       if (result != null && result is Map<String, dynamic>) {
                         setState(() {
                           _userName = result['name'] ?? _userName;
@@ -244,29 +240,10 @@ class _MyPageScreenState extends State<MyPageScreen> {
               color: Colors.white,
               child: Column(
                 children: [
-                  _buildMenuItem(
-                    CupertinoIcons.doc_text,
-                    '내 게시글 관리',
-                    onTap: () => Navigator.pushNamed(context, '/my_posts'),
-                  ),
-                  _buildMenuItem(
-                    CupertinoIcons.chat_bubble_2,
-                    '1:1 문의 내역',
-                    onTap: () => Navigator.pushNamed(context, '/inquiry'),
-                  ),
-                  _buildMenuItem(
-                    CupertinoIcons.info_circle,
-                    '고객센터',
-                    onTap: () {},
-                  ),
-                  _buildMenuItem(
-                    CupertinoIcons.square_arrow_right,
-                    '로그아웃',
-                    isLast: true,
-                    textColor: Colors.redAccent,
-                    // ⭐ 수정: 바로 이동하지 않고 다이얼로그 호출
-                    onTap: () => _showLogoutDialog(context),
-                  ),
+                  _buildMenuItem(CupertinoIcons.doc_text, '내 게시글 관리', onTap: () => Navigator.pushNamed(context, '/my_posts')),
+                  _buildMenuItem(CupertinoIcons.chat_bubble_2, '1:1 문의 내역', onTap: () => Navigator.pushNamed(context, '/inquiry')),
+                  _buildMenuItem(CupertinoIcons.info_circle, '고객센터', onTap: () {}),
+                  _buildMenuItem(CupertinoIcons.square_arrow_right, '로그아웃', isLast: true, textColor: Colors.redAccent, onTap: () => _showLogoutDialog(context)),
                 ],
               ),
             ),
@@ -291,9 +268,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
     );
   }
 
-  Widget _buildStatLine() {
-    return Container(width: 1, height: 30, color: Colors.grey[200]);
-  }
+  Widget _buildStatLine() { return Container(width: 1, height: 30, color: Colors.grey[200]); }
 
   Widget _buildMenuItem(IconData icon, String title, {bool isLast = false, Color? textColor, VoidCallback? onTap}) {
     return Column(

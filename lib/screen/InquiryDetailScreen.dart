@@ -7,7 +7,7 @@ class InquiryDetailScreen extends StatelessWidget {
 
   const InquiryDetailScreen({super.key, required this.inquiryData});
 
-  final Color classicBlue = const Color(0xFF004680);
+  final Color classicBlue = const Color(0xFFF7323F);
 
   @override
   Widget build(BuildContext context) {

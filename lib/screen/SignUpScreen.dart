@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../services/member_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -15,36 +16,63 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController passwordConfirmController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
 
+  final MemberService _memberService = MemberService();
+
   bool _isPasswordVisible = false;
   bool _isPasswordConfirmVisible = false;
 
-  final Color classicBlue = const Color(0xFF004680);
+  final Color classicBlue = const Color(0xFFF7323F);
+
+  // ⭐ 이메일 형식을 체크하는 정규식 함수
+  bool _isValidEmail(String email) {
+    return RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+        .hasMatch(email);
+  }
 
   // ⭐ 회원가입 시도 함수
-  void _attemptSignUp() {
-    String email = emailController.text;
-    String name = nameController.text;
+  void _attemptSignUp() async {
+    String email = emailController.text.trim();
+    String name = nameController.text.trim();
     String pw = passwordController.text;
     String pwConfirm = passwordConfirmController.text;
+    String phone = phoneController.text.trim();
 
     // 1. 빈칸 체크
-    if (email.isEmpty || name.isEmpty || pw.isEmpty || pwConfirm.isEmpty) {
-      _showSnackBar("모든 필수 정보를 입력해주세요.");
+    if (email.isEmpty || name.isEmpty || pw.isEmpty || pwConfirm.isEmpty || phone.isEmpty) {
+      _showSnackBar("모든 정보를 입력해주세요.");
       return;
     }
 
-    // 2. 비밀번호 일치 확인
+    // 2. ⭐ 이메일 형식 체크 추가!
+    if (!_isValidEmail(email)) {
+      _showSnackBar("올바른 이메일 형식이 아닙니다.");
+      return;
+    }
+
+    // 3. 비밀번호 일치 확인
     if (pw != pwConfirm) {
       _showSnackBar("비밀번호가 일치하지 않습니다.");
       return;
     }
 
-    // 3. 성공 시 시뮬레이션
-    // 실제로는 여기서 DB에 유저 정보를 저장하는 API를 호출해!
-    _showSuccessDialog();
+    // 4. 서버로 데이터 전송
+    Map<String, String> userData = {
+      "mid": email,
+      "mpw": pw,
+      "mname": name,
+      "email": email,
+      "phone": phone,
+    };
+
+    bool success = await _memberService.register(userData);
+
+    if (success) {
+      _showSuccessDialog();
+    } else {
+      _showSnackBar("회원가입에 실패했습니다. 다시 시도해주세요.");
+    }
   }
 
-  // 성공 알림창
   void _showSuccessDialog() {
     showDialog(
       context: context,
@@ -56,8 +84,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // 다이얼로그 닫기
-              Navigator.pop(context); // ⭐ 로그인 화면으로 돌아가기 (스택 하나 제거)
+              Navigator.pop(context);
+              Navigator.pop(context);
             },
             child: Text('확인', style: TextStyle(color: classicBlue, fontWeight: FontWeight.bold)),
           ),
@@ -66,9 +94,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  void _showSnackBar(String message) {
+  void _showSnackBar(String message, {Color? backgroundColor}) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+      SnackBar(content: Text(message), backgroundColor: backgroundColor ?? Colors.redAccent),
     );
   }
 
@@ -101,7 +129,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: const BackButton(color: Colors.black),
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -132,8 +163,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       height: 56,
                       child: OutlinedButton(
                         onPressed: () {
-                          // 중복확인 시뮬레이션
-                          _showSnackBar("사용 가능한 이메일입니다.");
+                          // ⭐ 중복확인 버튼 누를 때도 형식 체크!
+                          String email = emailController.text.trim();
+                          if (email.isEmpty) {
+                            _showSnackBar("이메일을 입력해주세요.");
+                          } else if (!_isValidEmail(email)) {
+                            _showSnackBar("올바른 이메일 형식이 아닙니다. (예: user@mail.com)");
+                          } else {
+                            // TODO: 나중에 중복확인 API 연결
+                            _showSnackBar("사용 가능한 이메일입니다.", backgroundColor: classicBlue);
+                          }
                         },
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: classicBlue),
@@ -147,14 +186,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 18),
 
-                // 이름 입력
                 TextField(
                   controller: nameController,
                   decoration: _buildAppleInputDecoration('이름', CupertinoIcons.person),
                 ),
                 const SizedBox(height: 18),
 
-                // 패스워드 입력
                 TextField(
                   controller: passwordController,
                   obscureText: !_isPasswordVisible,
@@ -169,7 +206,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 18),
 
-                // 패스워드 확인 입력
                 TextField(
                   controller: passwordConfirmController,
                   obscureText: !_isPasswordConfirmVisible,
@@ -184,7 +220,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 18),
 
-                // 전화번호 입력
                 TextField(
                   controller: phoneController,
                   keyboardType: TextInputType.phone,
@@ -192,12 +227,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // 가입하기 버튼
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _attemptSignUp, // ⭐ 수정된 가입 로직 연결
+                    onPressed: _attemptSignUp,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: classicBlue,
                       foregroundColor: Colors.white,

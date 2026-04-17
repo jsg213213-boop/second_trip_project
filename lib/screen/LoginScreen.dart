@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-// ⭐ 비밀번호 찾기 화면 임포트 (파일명 확인해줘!)
+import '../services/member_service.dart';
 import 'package:second_trip_project/screen/ForgotPasswordScreen.dart';
+import 'MyPageScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,10 +14,32 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final MemberService _memberService = MemberService();
 
   bool _isPasswordVisible = false;
-  final Color classicBlue = const Color(0xFF004680);
 
+  // 🎨 여기어때 레드 컬러 (#F7323F) 적용!
+  final Color yeogiRed = const Color(0xFFF7323F);
+
+  // ⭐ 이메일 유효성 검사 정규식
+  bool _isValidEmail(String email) {
+    return RegExp(
+        r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+        .hasMatch(email);
+  }
+
+  // ⭐ 스낵바 통합 함수
+  void _showSnackBar(String message, {bool isError = true}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.redAccent : yeogiRed,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // 애플 스타일 입력창 디자인
   InputDecoration _buildAppleInputDecoration(String labelText, IconData icon, {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: labelText,
@@ -31,10 +54,41 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: classicBlue, width: 1.5),
+        borderSide: BorderSide(color: yeogiRed, width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
     );
+  }
+
+  // 로그인 로직 처리
+  void _handleLogin() async {
+    String mid = emailController.text.trim();
+    String mpw = passwordController.text;
+
+    if (mid.isEmpty || mpw.isEmpty) {
+      _showSnackBar('아이디(이메일)와 비밀번호를 입력해주세요!');
+      return;
+    }
+
+    if (!_isValidEmail(mid)) {
+      _showSnackBar('올바른 이메일 형식이 아닙니다.');
+      return;
+    }
+
+    var userData = await _memberService.login(mid, mpw);
+
+    if (userData != null) {
+      String realName = userData['mname'] ?? "이름 없음";
+      String realEmail = userData['mid'] ?? mid;
+
+      if (!mounted) return;
+
+      // 로그인 성공 시 메인으로 가거나 마이페이지로 이동
+      Navigator.pushReplacementNamed(context, '/main');
+      _showSnackBar('$realName님, 환영합니다!', isError: false);
+    } else {
+      _showSnackBar('로그인 실패! 정보를 다시 확인해주세요.');
+    }
   }
 
   @override
@@ -44,7 +98,10 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -57,13 +114,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: Column(
                     children: [
-                      Icon(CupertinoIcons.paperplane_fill, size: 80, color: classicBlue),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Travel-Hub',
-                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: -1),
+                      // ⭐ [수정] 팀원 로고 이미지 적용 (assets 경로 확인!)
+                      Image.asset(
+                        'assets/images/logo.png',
+                        height: 50, // 로고 크기 적절히 조절
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Icon(CupertinoIcons.paperplane_fill, size: 80, color: yeogiRed),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 16),
                       Text(
                         '스마트 통합 여행 매니지먼트',
                         style: TextStyle(color: Colors.grey[500], fontSize: 15),
@@ -71,8 +130,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 60),
+                const SizedBox(height: 50),
 
+                // 이메일 입력창
                 TextField(
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -80,6 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
+                // 비밀번호 입력창
                 TextField(
                   controller: passwordController,
                   obscureText: !_isPasswordVisible,
@@ -92,21 +153,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Colors.grey[600],
                         size: 20,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
+                      onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                     ),
                   ),
                 ),
 
-                // ⭐ [수정 포인트] 비밀번호 찾기 연결!
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      // 비밀번호 찾기 화면으로 이동
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
@@ -117,21 +172,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 30),
 
+                // 로그인 버튼 (여기어때 레드!)
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/mypage');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${emailController.text}님, 환영합니다!'),
-                          backgroundColor: classicBlue,
-                        ),
-                      );
-                    },
+                    onPressed: _handleLogin,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: classicBlue,
+                      backgroundColor: yeogiRed,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       elevation: 0,
@@ -147,11 +195,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text('아직 회원이 아니신가요?', style: TextStyle(color: Colors.grey[600])),
                     TextButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/signup');
-                      },
+                      onPressed: () => Navigator.pushNamed(context, '/signup'),
                       child: Text('회원가입',
-                          style: TextStyle(color: classicBlue, fontWeight: FontWeight.bold)),
+                          style: TextStyle(color: yeogiRed, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
