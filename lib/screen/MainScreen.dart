@@ -119,7 +119,7 @@ class _MainScreenState extends State<MainScreen> {
           child: const Text(
             '로그인/회원가입',
             style: TextStyle(
-              color: Color(0xFFF7323F), // 여기어때 레드 컬러
+              color: Colors.blueAccent,
               fontWeight: FontWeight.w600,
               fontSize: 13,
             ),
