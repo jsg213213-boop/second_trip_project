@@ -1,17 +1,31 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
+import '../../constants.dart';
 import '../model/comp_model.dart';
+import '../model/car_dto.dart';
 
 class RentCompController with ChangeNotifier {
   static const int _perRegion = 10;
 
   final List<CompModel> _allItems = [];
   final Map<String, List<CompModel>> _regionItems = {};
+
+  List<CarDTO> _availableCars = [];
   bool _isLoading = false;
   String? _errorMessage;
+
+  List<CarDTO> get availableCars => _availableCars;
+
+  // 차량명 기준으로 그룹핑: { '쏘렌토': [CarDTO, CarDTO, ...], ... }
+  Map<String, List<CarDTO>> get carsByName {
+    final map = <String, List<CarDTO>>{};
+    for (final car in _availableCars) {
+      map.putIfAbsent(car.name, () => []).add(car);
+    }
+    return map;
+  }
 
   String? _selectedRegion;
 
@@ -39,11 +53,10 @@ class RentCompController with ChangeNotifier {
     notifyListeners();
 
     try {
-      final uri = Uri.http('10.0.2.2:8080', '/rent/companies', {'region': region});
-      final response = await http.get(uri);
+      final response = await dio.get('/rent/companies', queryParameters: {'region': region});
 
       if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(utf8.decode(response.bodyBytes));
+        final List<dynamic> jsonList = response.data;
         final items = jsonList.map((e) => CompModel.fromJson(e)).toList();
         _regionItems[region] = items;
         debugPrint('$region 렌트카 업체 ${items.length}개 로드');
@@ -53,6 +66,50 @@ class RentCompController with ChangeNotifier {
     } catch (e) {
       _errorMessage = '네트워크 오류: $e';
       debugPrint('데이터 로딩 실패: $e');
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  /// 차량 목록 조회 + 예약불가 차량 필터링
+  /// startDate, endDate: 'yyyy-MM-dd' 형식
+  Future<void> fetchAvailableCars(String startDate, String endDate) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // 두 요청 병렬로
+      final results = await Future.wait([
+        dio.get('/rent/cars'),
+        dio.get('/api/rental/unavailable', queryParameters: {
+          'startDate': startDate,
+          'endDate': endDate,
+        }),
+      ]);
+
+      final allCars = (results[0].data as List)
+          .map((e) => CarDTO.fromJson(e))
+          .toList();
+      final unavailableIds = Set<int>.from(results[1].data as List);
+
+      // 선택된 지역의 회사 ID 목록
+      final regionCompanyIds = (_selectedRegion != null
+              ? (_regionItems[_selectedRegion] ?? [])
+              : [])
+          .map((c) => c.id)
+          .whereType<int>()
+          .toSet();
+
+      _availableCars = allCars.where((c) =>
+          !unavailableIds.contains(c.id) &&
+          (regionCompanyIds.isEmpty || regionCompanyIds.contains(c.companyId))
+      ).toList();
+      debugPrint('전체 ${allCars.length}대 중 ${_availableCars.length}대 예약 가능 (지역: $_selectedRegion)');
+    } catch (e) {
+      _errorMessage = '차량 조회 실패: $e';
+      debugPrint('차량 조회 실패: $e');
     }
 
     _isLoading = false;
@@ -108,9 +165,7 @@ class RentCompController with ChangeNotifier {
       if (region == null) continue;
 
       grouped.putIfAbsent(region, () => []);
-      // if (grouped[region]!.length < _perRegion) {
-        grouped[region]!.add(item);
-      // }
+      grouped[region]!.add(item);
     }
 
     // 도시별 개수를 10으로 나누고 버림한 만큼만 가져오기
@@ -130,17 +185,19 @@ class RentCompController with ChangeNotifier {
       'numOfRows': '1000',
       'type': 'json',
     };
-    final uri = Uri.https(
-      'api.data.go.kr',
-      '/openapi/tn_pubr_public_car_rental_api',
-      queryParams,
-    );
+
+    final publicDio = Dio(BaseOptions(
+      baseUrl: 'https://api.data.go.kr',
+    ));
 
     try {
-      final response = await http.get(uri);
+      final response = await publicDio.get(
+        '/openapi/tn_pubr_public_car_rental_api',
+        queryParameters: queryParams,
+      );
 
       if (response.statusCode == 200) {
-        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        final decoded = response.data;
         debugPrint('API 응답: ${decoded.toString().substring(0, 500)}');
         final body = decoded['response']?['body'];
 

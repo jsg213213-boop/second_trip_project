@@ -100,7 +100,15 @@ class _CarRentHomeScreenState extends State<CarRentHomeScreen> {
                         calendar.rangeStart != null &&
                         calendar.rangeEnd != null)
                     ? () async {
-                        await context.read<RentCompController>().fetchByRegion(_selectedRegion!);
+                        final cal = context.read<CalendarController>();
+                        final start = cal.rangeStart!;
+                        final end = cal.rangeEnd!;
+                        final startDate = '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
+                        final endDate = '${end.year}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}';
+
+                        final controller = context.read<RentCompController>();
+                        await controller.fetchByRegion(_selectedRegion!);
+                        await controller.fetchAvailableCars(startDate, endDate);
                         if (!context.mounted) return;
                         Navigator.push(
                           context,

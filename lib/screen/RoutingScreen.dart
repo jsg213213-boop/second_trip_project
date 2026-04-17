@@ -53,7 +53,7 @@ class RoutingScreen extends StatelessWidget {
         '/inquiry': (context) => const InquiryScreen(),
 
         // [렌터카 - 태흔님]
-        '/rent_car': (context) => const CarRentHomeScreen(),    // 메인 버튼 연결용
+        '/car_rent_home': (context) => const CarRentHomeScreen(),
         '/car_calendar': (context) => const TableCalendarScreen(),
 
         // [숙소 - 재욱님]

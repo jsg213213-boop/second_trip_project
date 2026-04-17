@@ -60,6 +60,8 @@ dependencies:
   intl: ^0.20.2
   #서버 통신
   http: ^1.1.0
+  # 토큰 보안 저장
+  flutter_secure_storage: ^9.0.0
 
 
 

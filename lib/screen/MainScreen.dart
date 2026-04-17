@@ -167,7 +167,7 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           _buildCatItem(context, Icons.home_work, "숙소", '/hotel'),
           _buildCatItem(context, Icons.flight, "항공", '/airport'),
-          _buildCatItem(context, Icons.directions_car, "렌터카", '/rent_car'),
+          _buildCatItem(context, Icons.directions_car, "렌터카", '/car_rent_home'),
           _buildCatItem(context, Icons.inventory_2, "패키지", '/package_list'),
         ],
       ),

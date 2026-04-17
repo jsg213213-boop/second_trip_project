@@ -54,7 +54,7 @@ ios/Podfile
 
 # macOS
 macos/Podfile
-**/macos/Flutter/GeneratedPluginRegistrant.swift
+#**/macos/Flutter/GeneratedPluginRegistrant.swift
 **/macos/Flutter/ephemeral/
 
 ios/Flutter/Env.xcconfig

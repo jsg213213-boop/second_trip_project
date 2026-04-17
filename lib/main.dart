@@ -11,6 +11,7 @@ import 'package:second_trip_project/screen/RoutingScreen.dart';
 import 'package:second_trip_project/package/controller/package_controller.dart';
 import 'package:second_trip_project/car/controller/calendar_controller.dart';
 import 'package:second_trip_project/car/controller/rent_comp_controller.dart';
+import 'package:second_trip_project/car/controller/rental_controller.dart';
 
 // 숙소 파트 import
 import 'package:second_trip_project/providers/accommodation_providers.dart';
@@ -39,6 +40,7 @@ Future<void> main() async {
               create: (_) => RentCompController()),
           ChangeNotifierProvider<CalendarController>(
               create: (_) => CalendarController()),
+          ChangeNotifierProvider<RentalController>(create: (_) => RentalController()),
           // 항공 추가 부분
           ChangeNotifierProvider<FlightController>(
               create: (_) => FlightController()),
