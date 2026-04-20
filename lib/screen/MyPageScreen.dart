@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-// ⭐ MemberService 임포트 (경로는 프로젝트 구조에 맞게 확인해줘!)
 import '../services/member_service.dart';
 import 'MyBookingScreen.dart';
 import 'MyReviewScreen.dart';
@@ -12,11 +11,13 @@ import 'EditProfileScreen.dart';
 class MyPageScreen extends StatefulWidget {
   final String userName;
   final String userEmail;
+  final String userPhone; // ⭐ 1. 진짜 전화번호를 받을 변수 추가
 
   const MyPageScreen({
     super.key,
     required this.userName,
     required this.userEmail,
+    required this.userPhone, // ⭐ 2. 생성자에 추가
   });
 
   @override
@@ -24,25 +25,26 @@ class MyPageScreen extends StatefulWidget {
 }
 
 class _MyPageScreenState extends State<MyPageScreen> {
-  final Color classicBlue = const Color(0xFFF7323F);
+  final Color classicBlue = const Color(0xFF2C3E50); // 테마에 맞춘 컬러 수정
 
-  // ⭐ MemberService 인스턴스 생성
   final MemberService _memberService = MemberService();
 
   late String _userName;
   late String _userEmail;
-  String _userPhone = "010-1234-5678";
+  late String _userPhone; // ⭐ 3. 하드코딩 삭제하고 late로 선언
   File? _image;
   final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
+    // ⭐ 4. 부모 위젯(MyPageScreen)으로부터 받은 진짜 정보들로 초기화
     _userName = widget.userName;
     _userEmail = widget.userEmail;
+    _userPhone = widget.userPhone;
   }
 
-  // ⭐ 로그아웃 확인 다이얼로그 (수정 완료!)
+  // ⭐ 로그아웃 확인 다이얼로그
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -58,25 +60,15 @@ class _MyPageScreenState extends State<MyPageScreen> {
             ),
             TextButton(
               onPressed: () async {
-                // 1. 서비스의 logout() 호출 (내부적으로 모든 저장소 삭제)
                 await _memberService.logout();
-
                 if (!context.mounted) return;
-
-                // 2. 다이얼로그 닫기
                 Navigator.pop(context);
-
-                // 3. 메인화면으로 이동하며 모든 스택 비우기
                 Navigator.pushNamedAndRemoveUntil(context, '/main', (route) => false);
-
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('로그아웃 되었습니다.'),
-                      duration: Duration(seconds: 2)
-                  ),
+                  const SnackBar(content: Text('로그아웃 되었습니다.'), duration: Duration(seconds: 2)),
                 );
               },
-              child: Text('로그아웃', style: TextStyle(color: classicBlue, fontWeight: FontWeight.bold)),
+              child: const Text('로그아웃', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
             ),
           ],
         );
@@ -193,6 +185,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
                     ],
                   ),
                   const Spacer(),
+                  // ⭐ 수정 버튼: 이제 실제 _userPhone을 넘겨줌
                   IconButton(
                     icon: const Icon(CupertinoIcons.settings, color: Colors.grey),
                     onPressed: () async {
@@ -201,11 +194,12 @@ class _MyPageScreenState extends State<MyPageScreen> {
                         MaterialPageRoute(
                           builder: (context) => EditProfileScreen(
                             name: _userName,
-                            phone: _userPhone,
+                            phone: _userPhone, // 진짜 번호 전달!
                             image: _image,
                           ),
                         ),
                       );
+                      // 수정 완료 후 돌아왔을 때 화면 갱신
                       if (result != null && result is Map<String, dynamic>) {
                         setState(() {
                           _userName = result['name'] ?? _userName;

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../util/secure_storage_helper.dart';
 
 class MemberService {
@@ -26,7 +25,7 @@ class MemberService {
     }
   }
 
-  // ─── 로그인 ───────────────────────────────────────
+  // ─── 로그인 (전화번호 저장 로직 추가) ──────────────────────────
   Future<Map<String, dynamic>?> login(String mid, String mpw) async {
     try {
       final url = Uri.parse('$baseUrl/api/member/login');
@@ -40,11 +39,12 @@ class MemberService {
         final Map<String, dynamic> userData =
         jsonDecode(utf8.decode(response.bodyBytes));
 
-        // 회원 정보 보안 저장소에 저장
+        // ⭐ 수정: 서버에서 받은 데이터(phone)를 보안 저장소에 함께 저장
         await _storage.saveUserInfo(
           mid: userData['mid'] ?? mid,
           name: userData['mname'] ?? '사용자',
           email: userData['email'] ?? '',
+          phone: userData['phone'] ?? '', // 👈 phone 데이터 추가 저장
         );
 
         // 토큰 저장
@@ -55,12 +55,6 @@ class MemberService {
           await _storage.saveRefreshToken(userData['refreshToken']);
         }
 
-        print("========================================");
-        print("✅ 로그인 성공!");
-        print("🎫 토큰: ${await _storage.getAccessToken()}");
-        print("👤 사용자: ${await _storage.getUserName()}");
-        print("========================================");
-
         return userData;
       }
       return null;
@@ -70,16 +64,55 @@ class MemberService {
     }
   }
 
+  // ─── 회원 정보 수정 (전화번호 동기화 추가) ──────────────────────────
+  Future<bool> updateMember(Map<String, String> updateData) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/member/modify');
+      final token = await _storage.getAccessToken();
+
+      String? currentMid = await _storage.getUserMid();
+      if (currentMid != null) {
+        updateData['mid'] = currentMid;
+      }
+
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(updateData),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        print("✅ DB 업데이트 성공!");
+
+        // ⭐ 수정: 내 폰의 저장소 정보도 최신 데이터로 업데이트
+        String currentEmail = await _storage.getUserEmail() ?? "";
+
+        await _storage.saveUserInfo(
+          mid: currentMid ?? "",
+          name: updateData['mname'] ?? "",
+          email: currentEmail,
+          phone: updateData['phone'] ?? "", // 👈 수정된 전화번호 동기화
+        );
+
+        return true;
+      } else {
+        print("❌ 업데이트 실패: ${response.statusCode} - ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print('업데이트 에러: $e');
+      return false;
+    }
+  }
+
   // ─── 로그아웃 ─────────────────────────────────────
-  // 변경
   Future<void> logout() async {
-    // SharedPreferences 삭제
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
-
-    // SecureStorage도 삭제 ← 이게 빠져있어서 문제!
-    await SecureStorageHelper().logout();
-
+    await _storage.logout();
     print("로그아웃 완료: 전체 데이터 삭제됨");
   }
 
@@ -98,14 +131,11 @@ class MemberService {
         body: jsonEncode(userData),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print("✅ 회원가입 성공!");
         return true;
       } else {
-        print("❌ 서버 에러: ${response.statusCode}");
         return false;
       }
     } catch (e) {
-      print('회원가입 에러: $e');
       return false;
     }
   }
@@ -115,12 +145,13 @@ class MemberService {
     return await _storage.getAccessToken();
   }
 
-  // ─── 현재 사용자 정보 가져오기 ───────────────────
+  // ─── 현재 사용자 정보 가져오기 (전화번호 포함) ───────────────────
   Future<Map<String, String?>> getUserInfo() async {
     return {
       'mid': await _storage.getUserMid(),
       'name': await _storage.getUserName(),
       'email': await _storage.getUserEmail(),
+      'phone': await _storage.getUserPhone(), // ⭐ 추가: 저장소에서 폰번호 꺼내오기
     };
   }
 }
