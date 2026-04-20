@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';  // ✅ [추가]
 import '../../common/constants/api_constants.dart';
+import '../../services/member_service.dart';
 import '../model/reservation_item.dart';
 
 // 토큰 사용으로 변경 20250416
@@ -26,12 +27,9 @@ class ReservationController with ChangeNotifier {
 
   // ✅ [추가] 토큰 헤더 가져오기
   Future<Map<String, String>> _getHeaders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('accessToken') ?? '';
-
-    // ✅ [추가] 토큰 확인 로그
+    final memberService = MemberService();
+    final token = await memberService.getAccessToken() ?? '';
     debugPrint('[ReservationController] 토큰: $token');
-
     return {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',

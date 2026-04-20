@@ -12,6 +12,7 @@ import '../model/passenger_item.dart';
 import '../model/reservation_item.dart';
 import '../utils/format_utils.dart';
 import '../widget/flight_summary_card.dart';
+import '../../services/member_service.dart';
 import 'reservation_confirm_screen.dart';
 
 class ReservationScreen extends StatefulWidget {
@@ -23,9 +24,10 @@ class ReservationScreen extends StatefulWidget {
 
 class _ReservationScreenState extends State<ReservationScreen> {
 
+  // ── 로딩 상태 ─────────────────────────────────────────────
   bool _isLoading = false;
 
-  // ── 예약자 정보 (로그인 정보) ─────────────────────────────
+  // ── 예약자 정보 (로그인 정보 자동입력) ───────────────────
   String _bookerName  = '';
   String _bookerEmail = '';
   String _bookerPhone = '';
@@ -33,7 +35,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
   // ── 탑승객 목록 ───────────────────────────────────────────
   final List<PassengerItem> _passengers = [];
 
-  // ── 인원 정보 ─────────────────────────────────────────────
+  // ── 인원 정보 (검색 화면에서 선택한 인원) ────────────────
   int _adultCount  = 1;
   int _childCount  = 0;
   int _infantCount = 0;
@@ -42,38 +44,47 @@ class _ReservationScreenState extends State<ReservationScreen> {
   @override
   void initState() {
     super.initState();
+    // 화면 빌드 후 로그인 정보 자동입력
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserInfo();
     });
   }
 
   // ── 로그인 정보 자동입력 ──────────────────────────────────
+  // MainScreen 과 동일하게 MemberService.getUserInfo() 사용
+  // SharedPreferences 에서 저장된 회원 정보를 가져옴
   Future<void> _loadUserInfo() async {
-    final prefs = await SharedPreferences.getInstance();
     final controller = context.read<FlightController>();
+    final memberService = MemberService();
+    final userInfo = await memberService.getUserInfo();
+
     setState(() {
-      _bookerName  = prefs.getString('userName')  ?? '';
-      _bookerEmail = prefs.getString('userEmail') ?? '';
-      _bookerPhone = prefs.getString('userPhone') ?? '';
+      _bookerName  = userInfo['name']  ?? '';
+      _bookerEmail = userInfo['email'] ?? '';
+      _bookerPhone = userInfo['phone'] ?? '';
       _adultCount  = controller.adultCount;
       _childCount  = controller.childCount;
       _infantCount = controller.infantCount;
     });
   }
 
-  // ── 탑승객 추가 바텀시트 ──────────────────────────────────
+  // ── 탑승객 추가/수정 바텀시트 ────────────────────────────
+  // editIndex: null 이면 추가, 값이 있으면 해당 인덱스 탑승객 수정
   void _showAddPassengerSheet({int? editIndex}) {
-    // 남은 인원 유형 계산
-    final adultAdded   = _passengers.where((p) => p.passengerType == '성인').length;
-    final childAdded   = _passengers.where((p) => p.passengerType == '소아').length;
-    final infantAdded  = _passengers.where((p) => p.passengerType == '유아').length;
 
+    // 현재 추가된 탑승객 유형별 수량
+    final adultAdded  = _passengers.where((p) => p.passengerType == '성인').length;
+    final childAdded  = _passengers.where((p) => p.passengerType == '소아').length;
+    final infantAdded = _passengers.where((p) => p.passengerType == '유아').length;
+
+    // 기본 선택 유형: 남은 인원 순서대로 자동 선택
     String selectedType = editIndex != null
         ? _passengers[editIndex].passengerType
         : (_adultCount > adultAdded ? '성인'
         : _childCount > childAdded ? '소아' : '유아');
 
-    final lastNameCtrl  = TextEditingController(
+    // 수정 시 기존 정보 불러오기
+    final lastNameCtrl = TextEditingController(
         text: editIndex != null
             ? _passengers[editIndex].passengerName.split(' ').first
             : '');
@@ -81,14 +92,16 @@ class _ReservationScreenState extends State<ReservationScreen> {
         text: editIndex != null && _passengers[editIndex].passengerName.contains(' ')
             ? _passengers[editIndex].passengerName.split(' ').last
             : '');
-    final birthCtrl     = TextEditingController(
+    final birthCtrl = TextEditingController(
         text: editIndex != null ? _passengers[editIndex].passengerBirth : '');
     String selectedGender = editIndex != null
         ? _passengers[editIndex].passengerGender
         : '남성';
 
     final formKey = GlobalKey<FormState>();
-    bool sameAsBooker = false; // 탑승객 = 예약자 같은거 잇는지 확인
+
+    // ✅ 외부 변수로 선언해야 StatefulBuilder 재빌드 시 초기화 안 됨
+    bool sameAsBooker = false;
 
     showModalBottomSheet(
       context: context,
@@ -98,7 +111,6 @@ class _ReservationScreenState extends State<ReservationScreen> {
       ),
       builder: (_) => StatefulBuilder(
         builder: (context, setModalState) {
-
           return Padding(
             padding: EdgeInsets.only(
               left: 16, right: 16, top: 24,
@@ -132,7 +144,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
                     const SizedBox(height: 8),
 
-                    // 안내 문구
+                    // ── 안내 문구 ──────────────────────────
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -141,33 +153,34 @@ class _ReservationScreenState extends State<ReservationScreen> {
                       ),
                       child: const Text(
                         '탑승객 정보는 반드시 여권 정보와 동일해야 해요!',
-                        style: TextStyle(
-                            fontSize: 12, color: AppColors.primary),
+                        style: TextStyle(fontSize: 12, color: AppColors.primary),
                       ),
                     ),
+
                     const SizedBox(height: 16),
 
-                    // ── 예약자와 동일 체크박스 (첫 번째 탑승객만) ────────────
+                    // ── 예약자와 동일 체크박스 ─────────────
+                    // 성인 첫 번째 탑승객 추가 시에만 표시
                     if (selectedType == '성인' && editIndex == null) ...[
                       CheckboxListTile(
-                        // ✅ [변경 전] value 두 번, _sameAsBooker 없는 변수
-                        // ✅ [변경 후] sameAsBooker 외부 변수 사용
                         contentPadding: EdgeInsets.zero,
                         title: const Text(
                           '예약자와 동일',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        value: sameAsBooker,          // ✅ 외부 변수
+                        value: sameAsBooker,
                         activeColor: AppColors.primary,
                         onChanged: (checked) {
                           setModalState(() {
-                            sameAsBooker = checked ?? false;  // ✅ 외부 변수
+                            sameAsBooker = checked ?? false;
                             if (sameAsBooker) {
+                              // 예약자 정보 자동입력
                               lastNameCtrl.text  = _bookerName.isNotEmpty
                                   ? _bookerName.substring(0, 1) : '';
                               firstNameCtrl.text = _bookerName.length > 1
                                   ? _bookerName.substring(1) : '';
                             } else {
+                              // 체크 해제 시 초기화
                               lastNameCtrl.clear();
                               firstNameCtrl.clear();
                             }
@@ -179,12 +192,13 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
                     const SizedBox(height: 16),
 
-                    // ── 탑승객 유형 ────────────────────────
+                    // ── 탑승객 유형 선택 ───────────────────
                     const Text('탑승객 유형',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Row(
                       children: ['성인', '소아', '유아'].map((type) {
+                        // 해당 유형의 잔여 인원이 있는지 확인
                         final isAvailable = type == '성인'
                             ? adultAdded < _adultCount
                             : type == '소아'
@@ -195,8 +209,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                           padding: const EdgeInsets.only(right: 8),
                           child: GestureDetector(
                             onTap: (isAvailable || editIndex != null)
-                                ? () => setModalState(
-                                    () => selectedType = type)
+                                ? () => setModalState(() => selectedType = type)
                                 : null,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
@@ -233,16 +246,16 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
                     const SizedBox(height: 16),
 
-                    // ── 성 / 이름 ──────────────────────────
+                    // ── 성 / 이름 입력 ─────────────────────
                     Row(
                       children: [
+                        // 성 입력 (한글/영문만 허용)
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text('성',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold)),
+                                  style: TextStyle(fontWeight: FontWeight.bold)),
                               const SizedBox(height: 8),
                               TextFormField(
                                 controller: lastNameCtrl,
@@ -252,27 +265,25 @@ class _ReservationScreenState extends State<ReservationScreen> {
                                   contentPadding: EdgeInsets.symmetric(
                                       horizontal: 12, vertical: 14),
                                 ),
-                                // ✅ 한글 또는 영문만 허용
                                 inputFormatters: [
+                                  // 한글 또는 영문만 입력 허용
                                   FilteringTextInputFormatter.allow(
                                       RegExp(r'[a-zA-Zㄱ-ㅎ가-힣]')),
                                 ],
-                                validator: (val) => val == null ||
-                                    val.trim().isEmpty
-                                    ? '성을 입력해주세요'
-                                    : null,
+                                validator: (val) => val == null || val.trim().isEmpty
+                                    ? '성을 입력해주세요' : null,
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(width: 12),
+                        // 이름 입력 (한글/영문만 허용)
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text('이름',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold)),
+                                  style: TextStyle(fontWeight: FontWeight.bold)),
                               const SizedBox(height: 8),
                               TextFormField(
                                 controller: firstNameCtrl,
@@ -282,10 +293,13 @@ class _ReservationScreenState extends State<ReservationScreen> {
                                   contentPadding: EdgeInsets.symmetric(
                                       horizontal: 12, vertical: 14),
                                 ),
-                                validator: (val) => val == null ||
-                                    val.trim().isEmpty
-                                    ? '이름을 입력해주세요'
-                                    : null,
+                                inputFormatters: [
+                                  // 한글 또는 영문만 입력 허용
+                                  FilteringTextInputFormatter.allow(
+                                      RegExp(r'[a-zA-Zㄱ-ㅎ가-힣]')),
+                                ],
+                                validator: (val) => val == null || val.trim().isEmpty
+                                    ? '이름을 입력해주세요' : null,
                               ),
                             ],
                           ),
@@ -295,7 +309,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
                     const SizedBox(height: 16),
 
-                    // ── 생년월일 ───────────────────────────
+                    // ── 생년월일 입력 ──────────────────────
                     const Text('생년월일',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
@@ -309,8 +323,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
                       ),
                       keyboardType: TextInputType.number,
                       maxLength: 8,
-                      // ✅ 숫자만 허용
                       inputFormatters: [
+                        // 숫자만 입력 허용
                         FilteringTextInputFormatter.digitsOnly,
                       ],
                       validator: (val) {
@@ -326,7 +340,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
                     const SizedBox(height: 8),
 
-                    // ── 성별 ───────────────────────────────
+                    // ── 성별 선택 ──────────────────────────
                     const Text('성별',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
@@ -339,8 +353,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
                               Radio<String>(
                                 value: gender,
                                 groupValue: selectedGender,
-                                onChanged: (val) => setModalState(
-                                        () => selectedGender = val!),
+                                onChanged: (val) =>
+                                    setModalState(() => selectedGender = val!),
                                 activeColor: AppColors.primary,
                               ),
                               Text(gender),
@@ -352,7 +366,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
                     const SizedBox(height: 24),
 
-                    // ── 완료 버튼 ──────────────────────────
+                    // ── 취소 / 완료 버튼 ───────────────────
                     Row(
                       children: [
                         Expanded(
@@ -380,8 +394,10 @@ class _ReservationScreenState extends State<ReservationScreen> {
                               );
                               setState(() {
                                 if (editIndex != null) {
+                                  // 수정 모드: 기존 탑승객 교체
                                   _passengers[editIndex] = passenger;
                                 } else {
+                                  // 추가 모드: 새 탑승객 추가
                                   _passengers.add(passenger);
                                 }
                               });
@@ -404,7 +420,11 @@ class _ReservationScreenState extends State<ReservationScreen> {
   // ── 예약 진행 ─────────────────────────────────────────────
   Future<void> _onReserve() async {
     debugPrint('[ReservationScreen] 계속 예약 버튼 클릭');
+
+    // 중복 클릭 방지
     if (_isLoading) return;
+
+    // 탑승객 수 체크
     if (_passengers.length < _totalCount) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -422,12 +442,14 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
     if (dep == null) return;
 
-    final prefs    = await SharedPreferences.getInstance();
-    final mid      = prefs.getString('userMid') ?? '';
+    // 로그인 정보 가져오기
+    final prefs      = await SharedPreferences.getInstance();
+    final mid        = prefs.getString('userMid') ?? '';
     final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    final token    = prefs.getString('accessToken') ?? '';
+    final token      = prefs.getString('accessToken') ?? '';
     debugPrint('[ReservationScreen] 로그인: $isLoggedIn / mid: $mid / 토큰: $token');
 
+    // 예약 데이터 생성
     final reservation = ReservationItem(
       mid:             mid,
       airlineNm:       dep.airlineNm,
@@ -452,10 +474,11 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
     setState(() => _isLoading = true);
 
-    // ✅ [추가] 에러 메시지 확인
+    // 예약 API 호출 (에러 시 에러 메시지 반환)
     final error = await context.read<ReservationController>().addReservation(reservation);
     setState(() => _isLoading = false);
 
+    // 에러 발생 시 스낵바 표시 후 종료
     if (error != null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -469,6 +492,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
       return;
     }
 
+    // 성공 시 예약 확인 화면으로 이동
     if (mounted) {
       Navigator.push(
         context,
@@ -491,8 +515,8 @@ class _ReservationScreenState extends State<ReservationScreen> {
       );
     }
 
-    final totalPrice =
-        dep.price + (ret?.price ?? 0) + AirportConstants.issueFee;
+    // 총 금액 계산 (성인 1인 기준, 발급 수수료 포함)
+    final totalPrice = dep.price + (ret?.price ?? 0) + AirportConstants.issueFee;
 
     return AppBaseLayout(
       title: '예약하기',
@@ -502,7 +526,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
 
-            // ── 출발지 - 도착지 타이틀 ───────────────────
+            // ── 출발지 → 도착지 타이틀 ───────────────────
             Text(
               '${controller.depAirportNm} → ${controller.arrAirportNm}',
               style: const TextStyle(
@@ -513,7 +537,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
             const SizedBox(height: 20),
 
-            // ── 가는편 ────────────────────────────────────
+            // ── 가는편 요약 카드 ──────────────────────────
             FlightSummaryCard(
               label: '가는편',
               depTime:    dep.depPlandTime,
@@ -524,7 +548,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
               price:      dep.price,
             ),
 
-            // ── 오는편 (왕복일 때) ────────────────────────
+            // ── 오는편 요약 카드 (왕복일 때만 표시) ──────
             if (controller.isRoundTrip && ret != null) ...[
               const SizedBox(height: 12),
               FlightSummaryCard(
@@ -541,9 +565,9 @@ class _ReservationScreenState extends State<ReservationScreen> {
             const SizedBox(height: 24),
 
             // ── 예약자 정보 ───────────────────────────────
+            // 로그인 회원 정보 자동입력 (수정 불가)
             const Text('예약자 정보',
-                style: TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
 
             const SizedBox(height: 12),
 
@@ -559,14 +583,14 @@ class _ReservationScreenState extends State<ReservationScreen> {
                   const Divider(height: 20),
                   _infoRow('이메일', _bookerEmail),
                   const Divider(height: 20),
-                  _infoRow('휴대폰 번호', _bookerPhone),
+                  _infoRow('전화번호', _bookerPhone),
                 ],
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // ── 탑승객 정보 ───────────────────────────────
+            // ── 탑승객 선택 ───────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -580,7 +604,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
             const SizedBox(height: 8),
 
-            // 안내 문구
+            // 탑승객 안내 문구
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -595,7 +619,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
             const SizedBox(height: 12),
 
-            // ── 탑승객 목록 ───────────────────────────────
+            // ── 추가된 탑승객 목록 ────────────────────────
             ..._passengers.asMap().entries.map((entry) {
               final index = entry.key;
               final p = entry.value;
@@ -609,7 +633,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                 ),
                 child: Row(
                   children: [
-                    // 체크 아이콘
+                    // 완료 아이콘
                     const Icon(Icons.check_circle,
                         color: AppColors.primary, size: 20),
                     const SizedBox(width: 12),
@@ -620,8 +644,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                         children: [
                           Text(
                             '${p.passengerType} · ${p.passengerName}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
                             '${p.passengerBirth} · ${p.passengerGender}',
@@ -652,6 +675,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
             }),
 
             // ── 탑승객 추가하기 버튼 ──────────────────────
+            // 탑승객 수가 총 인원 수보다 적을 때만 표시
             if (_passengers.length < _totalCount) ...[
               const SizedBox(height: 8),
               OutlinedButton.icon(
@@ -674,6 +698,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
             const SizedBox(height: 24),
 
             // ── 금액 요약 ─────────────────────────────────
+            // 성인 1인 기준 금액 표시
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -683,10 +708,10 @@ class _ReservationScreenState extends State<ReservationScreen> {
               ),
               child: Column(
                 children: [
-                  _priceRow('가는편', dep.price),
+                  _priceRow('가는편 (성인 1인)', dep.price),
                   if (controller.isRoundTrip && ret != null) ...[
                     const SizedBox(height: 8),
-                    _priceRow('오는편', ret.price),
+                    _priceRow('오는편 (성인 1인)', ret.price),
                   ],
                   const SizedBox(height: 8),
                   _priceRow('발급 수수료', AirportConstants.issueFee,
@@ -695,7 +720,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('결제 예상금액',
+                      const Text('결제 예상금액 (1인)',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       Text(
                         FormatUtils.price(totalPrice),
@@ -713,7 +738,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
 
             const SizedBox(height: 12),
 
-            // 안내 문구
+            // ── 유의사항 안내 ─────────────────────────────
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -724,14 +749,14 @@ class _ReservationScreenState extends State<ReservationScreen> {
               child: const Text(
                 '· 발권 후 취소/변경 시 취소 수수료가 발생할 수 있습니다.\n'
                     '· 유류할증료는 항공사 정책에 따라 변경될 수 있습니다.',
-                style: TextStyle(
-                    fontSize: 12, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
             ),
 
             const SizedBox(height: 32),
 
             // ── 계속 예약 버튼 ────────────────────────────
+            // 탑승객 수 == 총 인원 수 일 때만 활성화
             CommonButton(
               text: '계속 예약',
               onPressed: _onReserve,
@@ -743,7 +768,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
     );
   }
 
-  // ── 정보 행 ───────────────────────────────────────────────
+  // ── 정보 행 위젯 ──────────────────────────────────────────
   Widget _infoRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -758,7 +783,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
     );
   }
 
-  // ── 금액 행 ───────────────────────────────────────────────
+  // ── 금액 행 위젯 ──────────────────────────────────────────
   Widget _priceRow(String label, int price, {bool isGrey = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
