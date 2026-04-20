@@ -25,7 +25,7 @@ class MemberService {
     }
   }
 
-  // ─── 로그인 (Role 저장 로직 추가) ──────────────────────────
+  // ─── 로그인 (토큰 로그 및 Role 저장 로직) ──────────────────────────
   Future<Map<String, dynamic>?> login(String mid, String mpw) async {
     try {
       final url = Uri.parse('$baseUrl/api/member/login');
@@ -39,14 +39,21 @@ class MemberService {
         final Map<String, dynamic> userData =
         jsonDecode(utf8.decode(response.bodyBytes));
 
-        // ⭐ 수정: 서버에서 받은 Role 정보를 포함하여 저장
-        // 서버 응답 JSON에 'role' 혹은 'roleNames' 등의 필드가 있는지 확인해봐!
+        // ⭐ [로그 추가] 서버에서 받은 전체 응답 데이터와 토큰 확인
+        print("================ [LOGIN SUCCESS] ================");
+        print("✅ 서버 응답 데이터: $userData");
+        print("🔑 AccessToken: ${userData['accessToken']}");
+        print("🔑 RefreshToken: ${userData['refreshToken']}");
+        print("🛡️ User Role: ${userData['role'] ?? 'USER'}");
+        print("=================================================");
+
+        // 수정: 서버에서 받은 Role 정보를 포함하여 저장
         await _storage.saveUserInfo(
           mid: userData['mid'] ?? mid,
           name: userData['mname'] ?? '사용자',
           email: userData['email'] ?? '',
           phone: userData['phone'] ?? '',
-          role: userData['role'] ?? 'USER', // 👈 권한 정보 저장 (기본값 USER)
+          role: userData['role'] ?? 'USER', // 권한 정보 저장
         );
 
         // 토큰 저장
@@ -58,10 +65,12 @@ class MemberService {
         }
 
         return userData;
+      } else {
+        print("❌ 로그인 실패: 상태 코드 ${response.statusCode}");
+        return null;
       }
-      return null;
     } catch (e) {
-      print('로그인 에러: $e');
+      print('❌ 로그인 통신 에러: $e');
       return null;
     }
   }
@@ -90,14 +99,14 @@ class MemberService {
         print("✅ DB 업데이트 성공!");
 
         String currentEmail = await _storage.getUserEmail() ?? "";
-        String? currentRole = await _storage.getUserRole(); // 기존 권한 유지
+        String? currentRole = await _storage.getUserRole();
 
         await _storage.saveUserInfo(
           mid: currentMid ?? "",
           name: updateData['mname'] ?? "",
           email: currentEmail,
           phone: updateData['phone'] ?? "",
-          role: currentRole ?? "USER", // 👈 권한 정보 유지
+          role: currentRole ?? "USER",
         );
 
         return true;
@@ -134,11 +143,14 @@ class MemberService {
         body: jsonEncode(userData),
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
+        print("✅ 회원가입 성공!");
         return true;
       } else {
+        print("❌ 회원가입 실패: ${response.statusCode}");
         return false;
       }
     } catch (e) {
+      print("❌ 회원가입 에러: $e");
       return false;
     }
   }
@@ -155,7 +167,7 @@ class MemberService {
       'name': await _storage.getUserName(),
       'email': await _storage.getUserEmail(),
       'phone': await _storage.getUserPhone(),
-      'role': await _storage.getUserRole(), // ⭐ 추가: 권한 정보 꺼내오기
+      'role': await _storage.getUserRole(),
     };
   }
 }
