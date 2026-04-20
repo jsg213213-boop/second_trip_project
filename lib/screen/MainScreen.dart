@@ -19,7 +19,8 @@ class _MainScreenState extends State<MainScreen> {
   bool isLoggedIn = false;
   String userName = "";
   String userEmail = "";
-  String userPhone = ""; // ⭐ 전화번호 변수 추가
+  String userPhone = "";
+  String userRole = ""; // ⭐ 권한(Role) 변수
 
   final MemberService _memberService = MemberService();
 
@@ -52,14 +53,17 @@ class _MainScreenState extends State<MainScreen> {
     final bool status = await _memberService.checkLoginStatus();
     final userInfo = await _memberService.getUserInfo();
 
-    setState(() {
-      isLoggedIn = status;
-      userName = userInfo['name'] ?? "";
-      userEmail = userInfo['email'] ?? "";
-      userPhone = userInfo['phone'] ?? "010-0000-0000"; // ⭐ 번호가 없으면 기본값 설정
-    });
+    if (mounted) {
+      setState(() {
+        isLoggedIn = status;
+        userName = userInfo['name'] ?? "";
+        userEmail = userInfo['email'] ?? "";
+        userPhone = userInfo['phone'] ?? "010-0000-0000";
+        userRole = userInfo['role'] ?? "USER"; // ⭐ 권한 가져오기
+      });
+    }
 
-    print("현재 로그인 상태 체크: $isLoggedIn / 번호: $userPhone");
+    print("현재 로그인 상태 체크: $isLoggedIn / 권한: $userRole / 번호: $userPhone");
   }
 
   @override
@@ -108,13 +112,32 @@ class _MainScreenState extends State<MainScreen> {
             ? Center(
           child: Padding(
             padding: const EdgeInsets.only(right: 16.0),
-            child: Text(
-              '$userName님, 안녕하세요!',
-              style: const TextStyle(
-                color: Colors.black87,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ⭐ 상단 배지 확인 로직
+                if (userRole == "ADMIN")
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7323F),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      "ADMIN",
+                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                Text(
+                  '$userName님, 안녕하세요!',
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
           ),
         )
@@ -236,7 +259,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // ⭐ 하단 네비게이션 로직 수정
   Widget _buildBottomNav(BuildContext context) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
@@ -249,21 +271,21 @@ class _MainScreenState extends State<MainScreen> {
         } else if (index == 2) {
           Navigator.pushNamed(context, '/nearby');
         } else if (index == 3) {
-          // ⭐ 내 정보 클릭 시 동작
           final bool status = await _memberService.checkLoginStatus();
 
           if (status) {
             final userInfo = await _memberService.getUserInfo();
             if (!mounted) return;
 
-            // ⭐ MyPageScreen으로 진짜 정보를 다 넘겨줌!
+            // ⭐ [수정 핵심] MyPageScreen으로 넘어갈 때 role 정보를 userInfo에서 가져와서 넣어줌!
             await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => MyPageScreen(
-                    userName: userInfo['name'] ?? "사용자",
-                    userEmail: userInfo['email'] ?? "",
-                    userPhone: userInfo['phone'] ?? "010-0000-0000" // 👈 여기!
+                  userName: userInfo['name'] ?? "사용자",
+                  userEmail: userInfo['email'] ?? "",
+                  userPhone: userInfo['phone'] ?? "010-0000-0000",
+                  userRole: userInfo['role'] ?? "USER", // 👈 빈 값('')에서 수정됨!
                 ),
               ),
             );
@@ -271,7 +293,7 @@ class _MainScreenState extends State<MainScreen> {
             if (!mounted) return;
             await Navigator.pushNamed(context, '/logout_mypage');
           }
-          _checkLoginStatus(); // 마이페이지에서 돌아왔을 때 메인 정보 최신화
+          _checkLoginStatus();
         }
       },
       items: const [

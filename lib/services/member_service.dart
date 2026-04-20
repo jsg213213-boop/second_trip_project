@@ -25,7 +25,7 @@ class MemberService {
     }
   }
 
-  // ─── 로그인 (전화번호 저장 로직 추가) ──────────────────────────
+  // ─── 로그인 (Role 저장 로직 추가) ──────────────────────────
   Future<Map<String, dynamic>?> login(String mid, String mpw) async {
     try {
       final url = Uri.parse('$baseUrl/api/member/login');
@@ -39,12 +39,14 @@ class MemberService {
         final Map<String, dynamic> userData =
         jsonDecode(utf8.decode(response.bodyBytes));
 
-        // ⭐ 수정: 서버에서 받은 데이터(phone)를 보안 저장소에 함께 저장
+        // ⭐ 수정: 서버에서 받은 Role 정보를 포함하여 저장
+        // 서버 응답 JSON에 'role' 혹은 'roleNames' 등의 필드가 있는지 확인해봐!
         await _storage.saveUserInfo(
           mid: userData['mid'] ?? mid,
           name: userData['mname'] ?? '사용자',
           email: userData['email'] ?? '',
-          phone: userData['phone'] ?? '', // 👈 phone 데이터 추가 저장
+          phone: userData['phone'] ?? '',
+          role: userData['role'] ?? 'USER', // 👈 권한 정보 저장 (기본값 USER)
         );
 
         // 토큰 저장
@@ -64,7 +66,7 @@ class MemberService {
     }
   }
 
-  // ─── 회원 정보 수정 (전화번호 동기화 추가) ──────────────────────────
+  // ─── 회원 정보 수정 (Role 동기화 유지) ──────────────────────────
   Future<bool> updateMember(Map<String, String> updateData) async {
     try {
       final url = Uri.parse('$baseUrl/api/member/modify');
@@ -87,14 +89,15 @@ class MemberService {
       if (response.statusCode == 200 || response.statusCode == 204) {
         print("✅ DB 업데이트 성공!");
 
-        // ⭐ 수정: 내 폰의 저장소 정보도 최신 데이터로 업데이트
         String currentEmail = await _storage.getUserEmail() ?? "";
+        String? currentRole = await _storage.getUserRole(); // 기존 권한 유지
 
         await _storage.saveUserInfo(
           mid: currentMid ?? "",
           name: updateData['mname'] ?? "",
           email: currentEmail,
-          phone: updateData['phone'] ?? "", // 👈 수정된 전화번호 동기화
+          phone: updateData['phone'] ?? "",
+          role: currentRole ?? "USER", // 👈 권한 정보 유지
         );
 
         return true;
@@ -145,13 +148,14 @@ class MemberService {
     return await _storage.getAccessToken();
   }
 
-  // ─── 현재 사용자 정보 가져오기 (전화번호 포함) ───────────────────
+  // ─── 현재 사용자 정보 가져오기 (Role 포함) ───────────────────
   Future<Map<String, String?>> getUserInfo() async {
     return {
       'mid': await _storage.getUserMid(),
       'name': await _storage.getUserName(),
       'email': await _storage.getUserEmail(),
-      'phone': await _storage.getUserPhone(), // ⭐ 추가: 저장소에서 폰번호 꺼내오기
+      'phone': await _storage.getUserPhone(),
+      'role': await _storage.getUserRole(), // ⭐ 추가: 권한 정보 꺼내오기
     };
   }
 }

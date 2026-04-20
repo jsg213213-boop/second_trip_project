@@ -22,7 +22,8 @@ class SecureStorageHelper {
   static const String userMidKey = 'userMid';
   static const String userNameKey = 'userName';
   static const String userEmailKey = 'userEmail';
-  static const String userPhoneKey = 'userPhone'; // ⭐ 전화번호 키 추가
+  static const String userPhoneKey = 'userPhone';
+  static const String userRoleKey = 'userRole'; // ⭐ 추가: 권한 키 상수
   static const String isLoggedInKey = 'isLoggedIn';
 
   // ─── 토큰 저장 ────────────────────────────────────
@@ -55,12 +56,13 @@ class SecureStorageHelper {
     return prefs.getString('refreshToken');
   }
 
-  // ─── 회원 정보 저장 (⭐ phone 매개변수 추가) ───────────────────────────
+  // ─── 회원 정보 저장 (⭐ role 매개변수 추가) ───────────────────────────
   Future<void> saveUserInfo({
     required String mid,
     required String name,
     required String email,
-    String? phone, // ⭐ 전화번호 추가
+    String? phone,
+    String? role, // ⭐ 추가: 권한 정보
   }) async {
     // SecureStorage에 저장
     await _storage.write(key: userMidKey, value: mid);
@@ -68,6 +70,9 @@ class SecureStorageHelper {
     await _storage.write(key: userEmailKey, value: email);
     if (phone != null) {
       await _storage.write(key: userPhoneKey, value: phone);
+    }
+    if (role != null) {
+      await _storage.write(key: userRoleKey, value: role); // ⭐ 추가
     }
     await _storage.write(key: isLoggedInKey, value: 'true');
 
@@ -80,9 +85,12 @@ class SecureStorageHelper {
     if (phone != null) {
       await prefs.setString('userPhone', phone);
     }
+    if (role != null) {
+      await prefs.setString('userRole', role); // ⭐ 추가
+    }
   }
 
-  // ─── 회원 정보 조회 (⭐ getUserPhone 추가) ───────────────────────────────
+  // ─── 회원 정보 조회 ───────────────────────────────
   Future<String?> getUserMid() async {
     final secureValue = await _storage.read(key: userMidKey);
     if (secureValue != null) return secureValue;
@@ -107,13 +115,21 @@ class SecureStorageHelper {
     return prefs.getString('userEmail');
   }
 
-  // ⭐ MemberService 에러 해결을 위한 전화번호 조회 메서드
   Future<String?> getUserPhone() async {
     final secureValue = await _storage.read(key: userPhoneKey);
     if (secureValue != null) return secureValue;
 
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('userPhone');
+  }
+
+  // ⭐ 추가: 권한 조회 메서드
+  Future<String?> getUserRole() async {
+    final secureValue = await _storage.read(key: userRoleKey);
+    if (secureValue != null) return secureValue;
+
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userRole');
   }
 
   // ─── 로그인 여부 확인 ─────────────────────────────

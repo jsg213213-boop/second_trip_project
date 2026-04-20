@@ -65,7 +65,7 @@ class RoutingScreen extends StatelessWidget {
         '/signup': (context) => const SignUpScreen(),
         '/logout_mypage': (context) => const LogoutMyPageScreen(),
         '/favorite': (context) => const WishlistScreen(), // 찜 목록 경로 추가
-        '/mypage': (context) => const MyPageScreen(userName: '사용자', userEmail: '', userPhone: '',),
+        '/mypage': (context) => const MyPageScreen(userName: '사용자', userEmail: '', userPhone: '', userRole: '',),
         '/edit_profile': (context) => const EditProfileScreen(name: '', phone: ''),
 
         '/change_password': (context) => const ChangePasswordScreen(),
