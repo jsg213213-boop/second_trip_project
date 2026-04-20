@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:second_trip_project/airport/screen/my_reservation_screen.dart';
+import '../../common/constants/app_colors.dart';
 
 class MyBookingScreen extends StatelessWidget {
   const MyBookingScreen({super.key});
@@ -15,15 +16,18 @@ class MyBookingScreen extends StatelessWidget {
       transitionBuilder: (_, animation, __, child) {
         return SlideTransition(
           position: Tween(begin: const Offset(0, 1), end: Offset.zero)
-              .animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
+              .animate(CurvedAnimation(
+              parent: animation, curve: Curves.easeOut)),
           child: child,
         );
       },
       pageBuilder: (_, __, ___) => Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 40),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 40),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         clipBehavior: Clip.antiAlias,
-        child: MyReservationScreen(type: type, isModal: true,),
+        child: MyReservationScreen(type: type, isModal: true),
       ),
     );
   }
@@ -31,15 +35,15 @@ class MyBookingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.backgroundGrey,
       appBar: AppBar(
         title: const Text(
           '내 예약 내역',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.backgroundWhite,
         elevation: 0,
-        leading: const BackButton(color: Colors.black),
+        leading: BackButton(color: AppColors.textPrimary),
         centerTitle: true,
       ),
       body: Padding(
@@ -47,9 +51,9 @@ class MyBookingScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               '카테고리를 선택하세요',
-              style: TextStyle(fontSize: 13, color: Colors.grey),
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
             Expanded(
@@ -59,16 +63,16 @@ class MyBookingScreen extends StatelessWidget {
                 crossAxisSpacing: 12,
                 childAspectRatio: 0.95,
                 children: [
-                  // ── 항공 ────────────────────────────────
+                  // ── 항공 → AppColors.primary (빨강) ─────
                   _CategoryCard(
                     label: '항공',
                     subtitle: '국내선 항공 예약',
                     icon: CupertinoIcons.airplane,
-                    color: const Color(0xFF3B6FE8),
-                    bgColor: const Color(0xFFEEF4FF),
+                    color: AppColors.primary,
+                    bgColor: AppColors.primaryLight,
                     onTap: () => _openDialog(context, BookingType.flight),
                   ),
-                  // ── 숙소 ────────────────────────────────
+                  // ── 숙소 → 담당자 고유색 유지 ───────────
                   _CategoryCard(
                     label: '숙소',
                     subtitle: '호텔/펜션 예약',
@@ -77,7 +81,7 @@ class MyBookingScreen extends StatelessWidget {
                     bgColor: const Color(0xFFEDFAF5),
                     onTap: () => _openDialog(context, BookingType.hotel),
                   ),
-                  // ── 렌터카 ──────────────────────────────
+                  // ── 렌터카 → 담당자 고유색 유지 ─────────
                   _CategoryCard(
                     label: '렌터카',
                     subtitle: '차량 렌탈 예약',
@@ -86,8 +90,8 @@ class MyBookingScreen extends StatelessWidget {
                     bgColor: const Color(0xFFFFF8ED),
                     onTap: () => _openDialog(context, BookingType.rental),
                   ),
-                  // ── 패키지 ──────────────────────────────
-                  // TODO: 패키지 담당자 - my_reservation_screen.dart 의 _packageBody() 교체
+                  // ── 패키지 → 담당자 고유색 유지 ─────────
+                  // TODO: 패키지 담당자 - _packageBody() 교체
                   _CategoryCard(
                     label: '패키지',
                     subtitle: '여행 패키지 예약',
@@ -130,9 +134,9 @@ class _CategoryCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.backgroundWhite,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFEEEEEE)),
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
@@ -173,7 +177,7 @@ class _CategoryCard extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -181,7 +185,7 @@ class _CategoryCard extends StatelessWidget {
                             subtitle,
                             style: const TextStyle(
                               fontSize: 12,
-                              color: Colors.grey,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],

@@ -348,7 +348,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
       // ✅ 앱바 우측에 예약내역 아이콘
       // 추후 삭제예정
-      actions: [
+      /*actions: [
         IconButton(
           icon: const Icon(Icons.receipt_long),
           onPressed: () => Navigator.push(
@@ -357,7 +357,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 builder: (_) => const MyReservationScreen()),
           ),
         ),
-      ],
+      ],*/
 
 
       body: SingleChildScrollView(
