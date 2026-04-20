@@ -34,10 +34,6 @@ class _MyReservationScreenState extends State<MyReservationScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final prefs = await SharedPreferences.getInstance();
-      _mid = prefs.getString('userMid') ?? '';
-      // ✅ [변경 전] _tempMid 하드코딩
-      // ✅ [변경 후] SharedPreferences 에서 가져오기
       _mid = await SecureStorageHelper().getUserMid() ?? '';
       debugPrint('[MyReservationScreen] 예약 목록 조회 시작 → mid: $_mid');
 
