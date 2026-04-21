@@ -1,16 +1,17 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:shimmer/shimmer.dart';
-import '../../common/constants/app_colors.dart';
-import '../../common/widget/app_base_layout.dart';
-import '../../common/widget/common_button.dart';
-import '../../car/controller/car_reservation_controller.dart';
-import '../../car/model/car_rental_reservation_dto.dart';
-import '../../car/util/format_util.dart';
-import '../../util/secure_storage_helper.dart';
-import '../controller/reservation_controller.dart';
-import '../model/reservation_item.dart';
-import '../utils/format_utils.dart';
+  import 'package:flutter/material.dart';
+  import 'package:provider/provider.dart';
+  import 'package:shimmer/shimmer.dart';
+  import '../../common/constants/app_colors.dart';
+  import '../../common/widget/app_base_layout.dart';
+  import '../../common/widget/common_button.dart';
+  import '../../car/controller/car_reservation_controller.dart';
+  import '../../car/model/car_rental_reservation_dto.dart';
+  import '../../car/util/format_util.dart';
+  import '../../util/secure_storage_helper.dart';
+  import '../controller/reservation_controller.dart';
+  import '../model/reservation_item.dart';
+  import '../utils/format_utils.dart';
+  import '../../util/api_client.dart';
 
 // ✅ package 추가
 enum BookingType { flight, rental, hotel, package }
@@ -476,7 +477,240 @@ class _MyReservationScreenState extends State<MyReservationScreen> {
   // TODO: 숙소 담당자 - 실제 숙소 예약 내역으로 교체
   // ─────────────────────────────────────────────
   Widget _hotelBody() {
-    return _emptyView('숙소 예약 내역', '준비 중입니다.');
+    return FutureBuilder<List<dynamic>>(
+      future: ApiClient().getMyReservations(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return _emptyView('오류가 발생했습니다.', snapshot.error.toString());
+        }
+
+        final list = snapshot.data ?? [];
+        if (list.isEmpty) {
+          return _emptyView('숙소 예약 내역이 없습니다.', '숙소를 예약해보세요!');
+        }
+
+        final now = DateTime.now();
+        // 오늘 날짜 (시간 제외)
+        final today = DateTime(now.year, now.month, now.day);
+
+        final activeList = list.where((item) {
+          final checkOut =
+          DateTime.tryParse(item['checkOutDate'] ?? '');
+          if (checkOut == null) return false;
+          final checkOutDate =
+          DateTime(checkOut.year, checkOut.month, checkOut.day);
+          // 체크아웃이 오늘보다 이후여야 현재 예약
+          return checkOutDate.isAfter(today) &&
+              item['status'] != 'CANCELLED';
+        }).toList();
+
+        final pastList = list.where((item) {
+          final checkOut =
+          DateTime.tryParse(item['checkOutDate'] ?? '');
+          if (checkOut == null) return false;
+          final checkOutDate =
+          DateTime(checkOut.year, checkOut.month, checkOut.day);
+          // 체크아웃이 오늘이거나 이전이면 이전 예약
+          return checkOutDate.isBefore(today) ||
+              checkOutDate.isAtSameMomentAs(today) ||
+              item['status'] == 'CANCELLED';
+        }).toList();
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            if (activeList.isNotEmpty) ...[
+              const Text('현재 예약',
+                  style: TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              ...activeList.map((item) =>
+                  _hotelReservationCard(item, isPast: false)),
+              const SizedBox(height: 16),
+            ],
+            if (pastList.isNotEmpty) ...[
+              const Text('이전 예약',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey)),
+              const SizedBox(height: 8),
+              ...pastList.map((item) =>
+                  _hotelReservationCard(item, isPast: true)),
+            ],
+          ],
+        );
+      },
+    );
+  }
+  Widget _hotelReservationCard(
+      Map<String, dynamic> item, {required bool isPast}) {
+    final status = item['status'] ?? '';
+    final isCancelled = status == 'CANCELLED';
+
+    String statusLabel;
+    Color statusColor;
+    if (isCancelled) {
+      statusLabel = '취소됨';
+      statusColor = Colors.grey;
+    } else if (isPast) {
+      statusLabel = '이용완료';
+      statusColor = Colors.grey;
+    } else if (status == 'CONFIRMED') {
+      statusLabel = '예약확정';
+      statusColor = Colors.green;
+    } else {
+      statusLabel = '예약대기';
+      statusColor = AppColors.primary;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isPast ? Colors.grey[50] : Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+            color: isPast ? Colors.grey.shade300 : AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 상태바
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.1),
+              borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(8)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(statusLabel,
+                    style: TextStyle(
+                        color: statusColor,
+                        fontWeight: FontWeight.bold)),
+                Text('예약번호 #${item['id']}',
+                    style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12)),
+              ],
+            ),
+          ),
+          // 예약 정보
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item['accommodationTitle'] ?? '숙소',
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item['roomTitle'] ?? '',
+                  style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today,
+                        size: 13,
+                        color: AppColors.textSecondary),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${item['checkInDate']} ~ ${item['checkOutDate']}',
+                      style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+                const Divider(height: 16),
+                Row(
+                  mainAxisAlignment:
+                  MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('총 금액',
+                        style: TextStyle(
+                            color: AppColors.textSecondary)),
+                    Text(
+                      item['totalPrice'] != null
+                          ? '${item['totalPrice'].toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}원'
+                          : '가격문의',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isPast
+                              ? AppColors.textSecondary
+                              : AppColors.primary),
+                    ),
+                  ],
+                ),
+                // 취소 버튼 (현재 예약만)
+                if (!isPast && !isCancelled) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () =>
+                          _showHotelCancelDialog(item['id']),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                            color: AppColors.danger),
+                        foregroundColor: AppColors.danger,
+                      ),
+                      child: const Text('예약 취소'),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  void _showHotelCancelDialog(int reservationId) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('예약 취소'),
+        content: const Text('정말 취소하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('아니오'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final success =
+              await ApiClient().cancelReservation(reservationId);
+              if (success) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('예약이 취소됐습니다.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                setState(() {}); // 화면 새로고침
+              }
+            },
+            child: const Text('예',
+                style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
   }
 
   // ─────────────────────────────────────────────

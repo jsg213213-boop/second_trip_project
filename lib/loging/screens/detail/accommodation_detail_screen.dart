@@ -348,7 +348,7 @@ class AccommodationDetailScreen extends ConsumerWidget {
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) =>
-                                      RoomDetailScreen(room: room),
+                                      RoomDetailScreen(room: room, accommodationTitle: detail.title),
                                 ),
                               ),
                             ))
@@ -431,41 +431,41 @@ class AccommodationDetailScreen extends ConsumerWidget {
         ],
       ),
 
-      // ─── 하단 예약 버튼 ────────────────────────────────────
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        decoration: const BoxDecoration(
-          color: AppTheme.surface,
-          border: Border(
-              top: BorderSide(color: AppTheme.border, width: 0.5)),
-        ),
-        child: ElevatedButton(
-          onPressed: () async {
-            final isLoggedIn = await SecureStorageHelper().isLoggedIn();
-
-            if (!isLoggedIn) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('예약은 회원만 가능합니다. 로그인해주세요!'),
-                  backgroundColor: AppTheme.primary,
-                  duration: Duration(seconds: 3),
-                ),
-              );
-              return;
-            }
-
-            // 회원이면 예약 화면으로 이동
-            // 나중에 날짜 선택 화면 추가
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('예약 기능 준비 중입니다.'),
-                backgroundColor: AppTheme.primary,
-              ),
-            );
-          },
-          child: const Text('예약하기'),
-        ),
-      ),
+      // // ─── 하단 예약 버튼 ────────────────────────────────────
+      // bottomNavigationBar: Container(
+      //   padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      //   decoration: const BoxDecoration(
+      //     color: AppTheme.surface,
+      //     border: Border(
+      //         top: BorderSide(color: AppTheme.border, width: 0.5)),
+      //   ),
+      //   // child: ElevatedButton(
+      //   //   onPressed: () async {
+      //   //     final isLoggedIn = await SecureStorageHelper().isLoggedIn();
+      //   //
+      //   //     if (!isLoggedIn) {
+      //   //       ScaffoldMessenger.of(context).showSnackBar(
+      //   //         const SnackBar(
+      //   //           content: Text('예약은 회원만 가능합니다. 로그인해주세요!'),
+      //   //           backgroundColor: AppTheme.primary,
+      //   //           duration: Duration(seconds: 3),
+      //   //         ),
+      //   //       );
+      //   //       return;
+      //   //     }
+      //   //
+      //   //     // 회원이면 예약 화면으로 이동
+      //   //     // 나중에 날짜 선택 화면 추가
+      //   //     ScaffoldMessenger.of(context).showSnackBar(
+      //   //       const SnackBar(
+      //   //         content: Text('예약 기능 준비 중입니다.'),
+      //   //         backgroundColor: AppTheme.primary,
+      //   //       ),
+      //   //     );
+      //   //   },
+      //   //   child: const Text('예약하기'),
+      //   // ),
+      // ),
     );
   }
 

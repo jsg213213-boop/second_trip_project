@@ -66,6 +66,7 @@ class AccommodationCard extends ConsumerWidget {
                         }
 
                         // 회원이면 찜 추가/삭제
+                        // 회원이면 찜 추가/삭제
                         if (isFav) {
                           await ApiClient().removeFavorite(item.contentId);
                         } else {
@@ -75,9 +76,12 @@ class AccommodationCard extends ConsumerWidget {
                             firstImage: item.firstImage,
                             addr1: item.addr1,
                           );
+                          // 찜 추가할 때 캐시에도 저장 ← 추가!
+                          ref.read(accommodationCacheProvider.notifier).update(
+                                (state) => {...state, item.contentId: item},
+                          );
                         }
-                        ref.read(favoriteProvider.notifier)
-                            .toggle(item.contentId);
+                        ref.read(favoriteProvider.notifier).toggle(item.contentId);
                       },
                       child: Container(
                         width: 32,

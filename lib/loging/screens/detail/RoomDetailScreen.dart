@@ -7,7 +7,8 @@ import '../../theme/app_theme.dart';
 
 class RoomDetailScreen extends StatefulWidget {
   final Room room;
-  const RoomDetailScreen({super.key, required this.room});
+  final String accommodationTitle; // 추가!
+  const RoomDetailScreen({super.key, required this.room, required this.accommodationTitle,});
 
   @override
   State<RoomDetailScreen> createState() => _RoomDetailScreenState();
@@ -225,10 +226,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppTheme.primary
-                                : isBooked
-                                ? Colors.red[100]
                                 : isPast
                                 ? Colors.grey[100]
+                                : isBooked
+                                ? Colors.red[100]
                                 : isPeak
                                 ? Colors.orange[50]
                                 : Colors.green[50],
@@ -253,12 +254,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   fontWeight: FontWeight.w600,
                                   color: isSelected
                                       ? Colors.white
-                                      : isBooked
-                                      ? Colors.red[700]
                                       : isPast
                                       ? Colors.grey[400]
-                                      : AppTheme
-                                      .textPrimary,
+                                      : isBooked
+                                      ? Colors.red[700]
+                                      : AppTheme.textPrimary,
                                 ),
                               ),
                               if (!isPast &&
@@ -281,7 +281,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                                   TextOverflow.ellipsis,
                                 ),
                               ],
-                              if (isBooked)
+                              if (isBooked && !isPast)
                                 Text(
                                   '예약중',
                                   style: TextStyle(
@@ -722,7 +722,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
               await ApiClient().createReservation(
                 contentId: widget.room.contentId,
                 roomCode: widget.room.roomCode,
-                accommodationTitle: '',
+                accommodationTitle: widget.accommodationTitle, // 수정!
                 roomTitle: widget.room.roomTitle,
                 checkInDate:
                 '${checkIn.year}-${checkIn.month.toString().padLeft(2, '0')}-${checkIn.day.toString().padLeft(2, '0')}',
@@ -837,10 +837,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
             return Container(
               margin: const EdgeInsets.all(2),
               decoration: BoxDecoration(
-                color: isBooked
-                    ? Colors.red[100]
-                    : isPast
+                // 지난 날짜면 무조건 회색
+                color: isPast
                     ? Colors.grey[100]
+                    : isBooked
+                    ? Colors.red[100]
                     : isPeak
                     ? Colors.orange[50]
                     : Colors.green[50],
@@ -858,18 +859,18 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: isBooked
-                          ? Colors.red[700]
-                          : isPast
+                      // 지난 날짜면 무조건 회색
+                      color: isPast
                           ? Colors.grey[400]
+                          : isBooked
+                          ? Colors.red[700]
                           : AppTheme.textPrimary,
                     ),
                   ),
                   if (!isPast && !isBooked && price > 0) ...[
                     const SizedBox(height: 1),
                     Text(
-                      _formatPrice(price)
-                          .replaceAll(',', '·'),
+                      _formatPrice(price).replaceAll(',', '·'),
                       style: TextStyle(
                         fontSize: 7,
                         color: isPeak
@@ -880,11 +881,11 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
-                  if (isBooked)
+                  // 지난 날짜면 예약중 표시 안함
+                  if (isBooked && !isPast)
                     Text('예약중',
                         style: TextStyle(
-                            fontSize: 7,
-                            color: Colors.red[700])),
+                            fontSize: 7, color: Colors.red[700])),
                 ],
               ),
             );

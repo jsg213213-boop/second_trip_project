@@ -140,13 +140,14 @@ class ApiClient {
   }
 
   // ─── 내 예약 목록 조회 ────────────────────────────
-  Future<List<dynamic>?> getMyReservations() async {
+// ─── 내 예약 목록 조회 ────────────────────────────
+  Future<List<dynamic>> getMyReservations() async {
     try {
       final response = await _dio.get('/api/reservations');
-      return response.data;
+      return response.data as List<dynamic>;
     } on DioException catch (e) {
       print('예약 목록 조회 에러: ${e.message}');
-      return null;
+      return []; // null 대신 빈 리스트 반환
     }
   }
 
