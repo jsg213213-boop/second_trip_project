@@ -3,13 +3,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class ApiConstants {
   ApiConstants._(); // 인스턴스 생성 방지
 
-  // ── 스프링부트 / 플라스크 (기존 유지) ───────────────────
-  // ✅ .env 에서 실제 값을 가져옴
-  // static String get springBaseUrl  => dotenv.env['SPRING_BASE_URL']  ?? '';
-  // static String get springBaseUrl2 => dotenv.env['SPRING_BASE_URL2'] ?? '';
-  // static String get flaskBaseUrl   => dotenv.env['FLASK_BASE_URL']   ?? '';
-  
-  // 팀규칙으로 변경
-  static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
-
+  // ── 스프링부트 BASE_URL ──────────────────────────────────
+  // .env 파일에 BASE_URL 설정 시 해당 값 사용
+  // .env 없거나 설정 안 된 경우 기본값 'http://10.0.2.2:8080' 사용
+  // (10.0.2.2: Android 에뮬레이터에서 localhost 접근 시 사용하는 주소)
+  static String get baseUrl =>
+      dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:8080';
 }
