@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../services/review_service.dart'; // 서비스 경로 확인해줘!
 
 class MyReviewScreen extends StatefulWidget {
   const MyReviewScreen({super.key});
@@ -9,28 +10,34 @@ class MyReviewScreen extends StatefulWidget {
 }
 
 class _MyReviewScreenState extends State<MyReviewScreen> {
-  // 메인 컬러 (여기어때 레드)
   final Color yeogiRed = const Color(0xFFF7323F);
+  final ReviewService _reviewService = ReviewService(); // 서비스 인스턴스 생성
 
-  List<Map<String, dynamic>> myReviews = [
-    {
-      'target': '제주 신라호텔',
-      'category': '숙소',
-      'rating': 5,
-      'date': '2026.04.10',
-      'content': '부모님 모시고 갔는데 서비스가 너무 좋았어요. 수영장 수온도 적당하고 조식도 맛있었습니다. 다음 제주 여행 때도 또 방문하고 싶네요!',
-      'image': 'https://picsum.photos/200',
-    },
-    {
-      'target': '제주공항 인수 (아반떼 CN7)',
-      'category': '렌터카',
-      'rating': 4,
-      'date': '2026.03.25',
-      'content': '차량 상태 깨끗하고 인수 절차가 빨라서 좋았습니다. 다만 워셔액이 부족해서 중간에 한 번 채웠네요. 그 외에는 만족합니다.',
-      'image': null,
-    },
-  ];
+  List<dynamic> myReviews = []; // 서버에서 받아올 리스트
+  bool _isLoading = true; // 로딩 상태 확인
 
+  @override
+  void initState() {
+    super.initState();
+    _loadReviews(); // 1. 시작하자마자 데이터 불러오기
+  }
+
+  // ─── 데이터 불러오기 함수 ───────────────────────────
+  Future<void> _loadReviews() async {
+    setState(() => _isLoading = true);
+    try {
+      final data = await _reviewService.getMyReviews();
+      setState(() {
+        myReviews = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      print("리뷰 로드 에러: $e");
+    }
+  }
+
+  // ─── 리뷰 등록 함수 ───────────────────────────────
   void _addReview() {
     final TextEditingController targetController = TextEditingController();
     final TextEditingController contentController = TextEditingController();
@@ -53,8 +60,6 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
             children: [
               const Text('새 리뷰 작성', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
-
-              // 카테고리 선택
               const Text('카테고리', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               const SizedBox(height: 10),
               Wrap(
@@ -68,7 +73,6 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
                 )).toList(),
               ),
               const SizedBox(height: 20),
-
               TextField(
                 controller: targetController,
                 decoration: InputDecoration(
@@ -78,7 +82,6 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
               const Text('별점', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               Row(
                 children: List.generate(5, (starIndex) => IconButton(
@@ -90,7 +93,6 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
                 )),
               ),
               const SizedBox(height: 15),
-
               TextField(
                 controller: contentController,
                 maxLines: 4,
@@ -101,7 +103,6 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -110,27 +111,26 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
                     backgroundColor: yeogiRed,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     if (targetController.text.isEmpty || contentController.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('내용을 모두 입력해주세요!')));
                       return;
                     }
 
-                    // 현재 날짜 가져오기 (나중에 DB 저장 시 필요)
-                    final String now = "${DateTime.now().year}.${DateTime.now().month.toString().padLeft(2, '0')}.${DateTime.now().day.toString().padLeft(2, '0')}";
+                    // 서버로 보낼 데이터 맵핑
+                    Map<String, dynamic> reviewData = {
+                      'target': targetController.text,
+                      'category': selectedCategory,
+                      'rating': currentRating,
+                      'content': contentController.text,
+                    };
 
-                    setState(() {
-                      myReviews.insert(0, {
-                        'target': targetController.text,
-                        'category': selectedCategory,
-                        'rating': currentRating,
-                        'date': now,
-                        'content': contentController.text,
-                        'image': null, // 일단 이미지는 생략
-                      });
-                    });
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('리뷰가 성공적으로 등록되었습니다!')));
+                    bool success = await _reviewService.registerReview(reviewData);
+                    if (success) {
+                      Navigator.pop(context);
+                      _loadReviews(); // 서버에서 다시 불러오기
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('리뷰가 등록되었습니다!')));
+                    }
                   },
                   child: const Text('리뷰 등록', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
@@ -142,8 +142,8 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
     );
   }
 
-  // ⭐ 1. 리뷰 삭제 함수
-  void _deleteReview(int index) {
+  // ─── 리뷰 삭제 함수 ───────────────────────────────
+  void _deleteReview(int rno) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -153,14 +153,15 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('취소', style: TextStyle(color: Colors.grey))),
           TextButton(
-            onPressed: () {
-              setState(() {
-                myReviews.removeAt(index);
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('리뷰가 삭제되었습니다.'), backgroundColor: Colors.redAccent),
-              );
+            onPressed: () async {
+              bool success = await _reviewService.deleteReview(rno);
+              if (success) {
+                Navigator.pop(context);
+                _loadReviews(); // 서버에서 다시 불러오기
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('리뷰가 삭제되었습니다.'), backgroundColor: Colors.redAccent),
+                );
+              }
             },
             child: const Text('삭제', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
@@ -169,10 +170,11 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
     );
   }
 
-  // ⭐ 2. 리뷰 수정 함수 (바텀 시트)
+  // ─── 리뷰 수정 함수 ───────────────────────────────
   void _editReview(int index) {
-    final TextEditingController contentController = TextEditingController(text: myReviews[index]['content']);
-    int currentRating = myReviews[index]['rating'];
+    final review = myReviews[index];
+    final TextEditingController contentController = TextEditingController(text: review['content']);
+    int currentRating = review['rating'];
 
     showModalBottomSheet(
       context: context,
@@ -188,7 +190,7 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('${myReviews[index]['target']} 리뷰 수정', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('${review['target']} 리뷰 수정', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
               const Text('별점 수정', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               Row(
@@ -218,13 +220,19 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
                     backgroundColor: yeogiRed,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      myReviews[index]['content'] = contentController.text;
-                      myReviews[index]['rating'] = currentRating;
-                    });
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('리뷰가 수정되었습니다.')));
+                  onPressed: () async {
+                    Map<String, dynamic> updateData = {
+                      'rno': review['rno'],
+                      'content': contentController.text,
+                      'rating': currentRating,
+                    };
+
+                    bool success = await _reviewService.modifyReview(updateData);
+                    if (success) {
+                      Navigator.pop(context);
+                      _loadReviews(); // 서버에서 다시 불러오기
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('리뷰가 수정되었습니다.')));
+                    }
                   },
                   child: const Text('수정 완료', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
@@ -247,14 +255,19 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
         leading: const BackButton(color: Colors.black),
         centerTitle: true,
       ),
-      body: myReviews.isEmpty
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator(color: yeogiRed)) // 로딩 중일 때
+          : myReviews.isEmpty
           ? _buildEmptyState()
-          : ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: myReviews.length,
-        itemBuilder: (context, index) => _buildReviewCard(index),
+          : RefreshIndicator( // 2. 당겨서 새로고침 추가
+        onRefresh: _loadReviews,
+        color: yeogiRed,
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: myReviews.length,
+          itemBuilder: (context, index) => _buildReviewCard(index),
+        ),
       ),
-      // ⭐ 리뷰 작성 버튼 추가
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addReview,
         backgroundColor: yeogiRed,
@@ -266,6 +279,12 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
 
   Widget _buildReviewCard(int index) {
     final review = myReviews[index];
+
+    // 3. 날짜 예쁘게 자르기 (2026-04-21T16:54:46 -> 2026.04.21)
+    String formattedDate = review['regDate'] != null
+        ? review['regDate'].toString().split('T')[0].replaceAll('-', '.')
+        : "";
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -286,7 +305,7 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
                 '${review['category']} · ${review['target']}',
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
               ),
-              Text(review['date'], style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              Text(formattedDate, style: const TextStyle(color: Colors.grey, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 8),
@@ -303,12 +322,12 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (review['image'] != null)
+              if (review['reviewImg'] != null) // 변수명 서버랑 맞춤
                 Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.network(review['image'], width: 80, height: 80, fit: BoxFit.cover),
+                    child: Image.network(review['reviewImg'], width: 80, height: 80, fit: BoxFit.cover),
                   ),
                 ),
               Expanded(
@@ -331,7 +350,7 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
                 child: const Text('수정', style: TextStyle(color: Colors.grey, fontSize: 13)),
               ),
               TextButton(
-                onPressed: () => _deleteReview(index),
+                onPressed: () => _deleteReview(review['rno']), // 4. 인덱스 대신 rno(PK) 사용
                 child: const Text('삭제', style: TextStyle(color: Colors.redAccent, fontSize: 13)),
               ),
             ],
