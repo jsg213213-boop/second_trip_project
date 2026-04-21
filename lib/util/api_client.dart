@@ -2,6 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'secure_storage_helper.dart';
 
+late final Dio dio;
+late final Dio publicDio;
+
 class ApiClient {
   // 싱글톤 패턴
   static final ApiClient _instance = ApiClient._internal();
@@ -9,22 +12,29 @@ class ApiClient {
   ApiClient._internal();
 
   final _storage = SecureStorageHelper();
-  late final Dio _dio;
 
-  static String get baseUrl =>
-      dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:8080';
+  static String get baseUrl {
+    final url = dotenv.env['BASE_URL'];
+    return (url == null || url.isEmpty) ? 'http://10.0.2.2:8080' : url;
+  }
 
   // ─── 초기화 ───────────────────────────────────────
   void init() {
-    _dio = Dio(BaseOptions(
+    final baseOptions = BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 15),
       headers: {'Content-Type': 'application/json'},
-    ));
+    );
+
+    // 인증 불필요한 공개 API용
+    publicDio = Dio(baseOptions);
+
+    // 인증 필요한 API용 (토큰 인터셉터 포함)
+    dio = Dio(baseOptions);
 
     // 요청 인터셉터 → 모든 요청에 자동으로 토큰 추가
-    _dio.interceptors.add(InterceptorsWrapper(
+    dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await _storage.getAccessToken();
         print('===== API 호출 토큰: $token ====='); // 로그 추가
@@ -54,7 +64,7 @@ class ApiClient {
     required String addr1,
   }) async {
     try {
-      final response = await _dio.post(
+      final response = await dio.post(
         '/api/favorites',
         data: {
           'contentId': contentId,
@@ -73,7 +83,7 @@ class ApiClient {
   // ─── 찜 삭제 ──────────────────────────────────────
   Future<bool> removeFavorite(String contentId) async {
     try {
-      await _dio.delete('/api/favorites/$contentId');
+      await dio.delete('/api/favorites/$contentId');
       return true;
     } on DioException catch (e) {
       print('찜 삭제 에러: ${e.message}');
@@ -84,7 +94,7 @@ class ApiClient {
   // ─── 내 찜 목록 조회 ──────────────────────────────
   Future<List<dynamic>?> getMyFavorites() async {
     try {
-      final response = await _dio.get('/api/favorites');
+      final response = await dio.get('/api/favorites');
       return response.data;
     } on DioException catch (e) {
       print('찜 목록 조회 에러: ${e.message}');
@@ -96,7 +106,7 @@ class ApiClient {
   Future<bool> checkFavorite(String contentId) async {
     try {
       final response =
-      await _dio.get('/api/favorites/check/$contentId');
+      await dio.get('/api/favorites/check/$contentId');
       return response.data as bool;
     } on DioException catch (e) {
       print('찜 여부 확인 에러: ${e.message}');
@@ -116,7 +126,7 @@ class ApiClient {
     required int totalPrice,
   }) async {
     try {
-      final response = await _dio.post(
+      final response = await dio.post(
         '/api/reservations',
         data: {
           'contentId': contentId,
@@ -142,7 +152,7 @@ class ApiClient {
   // ─── 내 예약 목록 조회 ────────────────────────────
   Future<List<dynamic>?> getMyReservations() async {
     try {
-      final response = await _dio.get('/api/reservations');
+      final response = await dio.get('/api/reservations');
       return response.data;
     } on DioException catch (e) {
       print('예약 목록 조회 에러: ${e.message}');
@@ -153,7 +163,7 @@ class ApiClient {
   // ─── 예약 취소 ────────────────────────────────────
   Future<bool> cancelReservation(int reservationId) async {
     try {
-      await _dio.delete('/api/reservations/$reservationId');
+      await dio.delete('/api/reservations/$reservationId');
       return true;
     } on DioException catch (e) {
       print('예약 취소 에러: ${e.message}');
