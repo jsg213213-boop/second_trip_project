@@ -1,10 +1,9 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import '../../services/member_service.dart';
+import '../../services/reservation_service.dart';
 import '../model/package_item.dart';
+import '../model/package_reservation_dto.dart';
 
 class PackageDetailScreen extends StatefulWidget {
   static bool isTesting = false;
@@ -52,35 +51,26 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
 
     // 예약 API 호출 로직
     try {
-      final userInfo = await _memberService.getUserInfo();
-      final String userEmail = userInfo['email'] ?? '';
       final String accessToken = await _memberService.getAccessToken() ?? '';
-      final String baseUrl = dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:8080';
       final int totalPrice = widget.item.price * _selectedPeople;
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/reservations/'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $accessToken"
-        },
-        body: jsonEncode({
-          "memberId": userEmail,
-          "packageId": widget.item.id,
-          "reservationDate": DateFormat('yyyy-MM-dd').format(DateTime.now()),
-          "peopleCount": _selectedPeople,
-          "totalPrice": totalPrice,
-        }),
+      final dto = PackageReservationDTO(
+        packageId: widget.item.id,
+        reservationDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+        peopleCount: _selectedPeople,
+        totalPrice: totalPrice,
       );
+
+      final ReservationService reservationService = ReservationService();
+      final reservationId = await reservationService.registerReservation(dto, accessToken);
 
       if (!context.mounted) return;
 
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("${widget.item.title} $_selectedPeople명 예약 완료!")),
-        );
+      if (reservationId != null) {
+        // 예약 성공 시 모달창 띄우기
+        _showReservationSuccessDialog(context, reservationId);
       } else {
-        throw Exception('서버 응답 오류: ${response.statusCode}');
+        throw Exception('서버 응답 오류');
       }
     } catch (e) {
       if (context.mounted) {
@@ -106,10 +96,31 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // 다이얼로그 닫기
-              Navigator.pushNamed(context, '/login'); // 로그인 페이지로 이동
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/login');
             },
             child: const Text("로그인하러 가기"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // [수정] 예약 성공 모달창 추가
+  void _showReservationSuccessDialog(BuildContext context, int reservationId) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text("🎉 예약 완료"),
+        content: Text("${widget.item.title} 예약이 완료되었습니다!\n예약 번호: $reservationId"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // 다이얼로그 닫기
+              Navigator.pop(context); // 상세 페이지 닫기 (이전 화면으로 복귀)
+            },
+            child: const Text("확인"),
           ),
         ],
       ),
@@ -129,7 +140,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context); // 먼저 다이얼로그 닫기
+              Navigator.pop(context);
               await _processBooking(context);
             },
             child: const Text("확인"),
@@ -174,7 +185,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
   }
 
   Widget _buildBottomBar() {
-    return SafeArea( // 💡 이 위젯을 추가하세요
+    return SafeArea(
       child: Container(
         padding: const EdgeInsets.all(16),
         child: ElevatedButton(

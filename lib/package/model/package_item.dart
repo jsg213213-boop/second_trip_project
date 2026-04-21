@@ -1,7 +1,7 @@
 /// 패키지 여행 상품의 데이터를 정의하는 모델 클래스입니다.
 /// API 응답 혹은 로컬 JSON 파일의 데이터를 파싱하여 앱 내에서 사용합니다.
 class PackageItem {
-  final String id;           // 상품 고유번호(PK)
+  final int id;           // 상품 고유번호(PK)
   final String category;     // 분류 기준 (예: 'Special', 'Best', 'Season')
   final String title;        // 패키지 상품명
   final String description;  // 상품 소개글 (상세 화면 상단 표시)
@@ -38,7 +38,7 @@ class PackageItem {
   /// JSON 데이터를 받아 PackageItem 객체로 변환하는 팩토리 생성자
   factory PackageItem.fromJson(Map<String, dynamic> json) {
     return PackageItem(
-      id: json['id'] ?? '',
+      id: json['id'] as int,
       category: json['category'] ?? '',
       title: json['title'] ?? '',
       description: json['description'] ?? '',
@@ -56,4 +56,6 @@ class PackageItem {
       itinerary: json['itinerary'] != null ? List<Map<String, dynamic>>.from(json['itinerary']) : [],
     );
   }
+
+  
 }
