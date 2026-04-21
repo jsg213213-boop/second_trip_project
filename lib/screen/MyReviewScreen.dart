@@ -9,9 +9,9 @@ class MyReviewScreen extends StatefulWidget {
 }
 
 class _MyReviewScreenState extends State<MyReviewScreen> {
-  final Color classicBlue = const Color(0xFF004680);
+  // 메인 컬러 (여기어때 레드)
+  final Color yeogiRed = const Color(0xFFF7323F);
 
-  // ⭐ 실시간 반영을 위해 리스트를 State 안으로 가져왔어!
   List<Map<String, dynamic>> myReviews = [
     {
       'target': '제주 신라호텔',
@@ -30,6 +30,117 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
       'image': null,
     },
   ];
+
+  void _addReview() {
+    final TextEditingController targetController = TextEditingController();
+    final TextEditingController contentController = TextEditingController();
+    String selectedCategory = '숙소';
+    int currentRating = 5;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            left: 20, right: 20, top: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('새 리뷰 작성', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+
+              // 카테고리 선택
+              const Text('카테고리', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 10,
+                children: ['숙소', '항공', '렌터카', '패키지'].map((cat) => ChoiceChip(
+                  label: Text(cat),
+                  selected: selectedCategory == cat,
+                  onSelected: (selected) => setModalState(() => selectedCategory = cat),
+                  selectedColor: yeogiRed.withOpacity(0.1),
+                  labelStyle: TextStyle(color: selectedCategory == cat ? yeogiRed : Colors.black, fontWeight: FontWeight.bold),
+                )).toList(),
+              ),
+              const SizedBox(height: 20),
+
+              TextField(
+                controller: targetController,
+                decoration: InputDecoration(
+                  labelText: '이용 시설/상품명',
+                  hintText: '예: 제주 신라호텔',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              const Text('별점', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              Row(
+                children: List.generate(5, (starIndex) => IconButton(
+                  onPressed: () => setModalState(() => currentRating = starIndex + 1),
+                  icon: Icon(
+                    currentRating > starIndex ? Icons.star_rounded : Icons.star_outline_rounded,
+                    color: Colors.amber, size: 35,
+                  ),
+                )),
+              ),
+              const SizedBox(height: 15),
+
+              TextField(
+                controller: contentController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: '리뷰 내용',
+                  hintText: '이용하신 경험을 공유해주세요!',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: yeogiRed,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    if (targetController.text.isEmpty || contentController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('내용을 모두 입력해주세요!')));
+                      return;
+                    }
+
+                    // 현재 날짜 가져오기 (나중에 DB 저장 시 필요)
+                    final String now = "${DateTime.now().year}.${DateTime.now().month.toString().padLeft(2, '0')}.${DateTime.now().day.toString().padLeft(2, '0')}";
+
+                    setState(() {
+                      myReviews.insert(0, {
+                        'target': targetController.text,
+                        'category': selectedCategory,
+                        'rating': currentRating,
+                        'date': now,
+                        'content': contentController.text,
+                        'image': null, // 일단 이미지는 생략
+                      });
+                    });
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('리뷰가 성공적으로 등록되었습니다!')));
+                  },
+                  child: const Text('리뷰 등록', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   // ⭐ 1. 리뷰 삭제 함수
   void _deleteReview(int index) {
@@ -104,7 +215,7 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
                 height: 55,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: classicBlue,
+                    backgroundColor: yeogiRed,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () {
@@ -142,6 +253,13 @@ class _MyReviewScreenState extends State<MyReviewScreen> {
         padding: const EdgeInsets.all(16),
         itemCount: myReviews.length,
         itemBuilder: (context, index) => _buildReviewCard(index),
+      ),
+      // ⭐ 리뷰 작성 버튼 추가
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _addReview,
+        backgroundColor: yeogiRed,
+        icon: const Icon(CupertinoIcons.pencil, color: Colors.white),
+        label: const Text('리뷰 쓰기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
