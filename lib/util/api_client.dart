@@ -150,13 +150,13 @@ class ApiClient {
   }
 
   // ─── 내 예약 목록 조회 ────────────────────────────
-  Future<List<dynamic>?> getMyReservations() async {
+  Future<List<dynamic>> getMyReservations() async {
     try {
       final response = await dio.get('/api/reservations');
-      return response.data;
+      return response.data as List<dynamic>;
     } on DioException catch (e) {
       print('예약 목록 조회 에러: ${e.message}');
-      return null;
+      return []; // null 대신 빈 리스트 반환
     }
   }
 
@@ -168,6 +168,25 @@ class ApiClient {
     } on DioException catch (e) {
       print('예약 취소 에러: ${e.message}');
       return false;
+    }
+  }
+
+  Future<List<String>> getBookedDates({
+    required String contentId,
+    required String roomCode,
+  }) async {
+    try {
+      final response = await dio.get(
+        '/api/reservations/booked-dates',
+        queryParameters: {
+          'contentId': contentId,
+          'roomCode': roomCode,
+        },
+      );
+      return List<String>.from(response.data);
+    } on DioException catch (e) {
+      print('예약된 날짜 조회 에러: ${e.message}');
+      return [];
     }
   }
 }
