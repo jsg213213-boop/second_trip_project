@@ -1,16 +1,17 @@
 import 'package:flutter/foundation.dart';
 
-import '../../constants.dart';
+import '../../util/api_client.dart';
 import '../model/car_search_cursor_request_dto.dart';
 import '../model/car_search_cursor_response.dart';
 import '../model/company_car_page_request_dto.dart';
 import '../model/company_car_page_response_dto.dart';
 
 class CarRentListService {
+
   Future<({List<CarSearchCursorResponseDTO> cars, bool hasNext, int? nextCursorPrice, String? nextCursorName})> searchCars(
     CarSearchCursorRequestDTO request,
   ) async {
-    final response = await dio.get(
+    final response = await publicDio.get(
       '/car/search/all',
       queryParameters: request.toQueryParameters(),
     );
@@ -25,7 +26,7 @@ class CarRentListService {
   }
 
   Future<CompanyCarPageResponseDTO> fetchCarOptions(CompanyCarPageRequestDTO request) async {
-    final response = await dio.get(
+    final response = await publicDio.get(
       '/car/search/company',
       queryParameters: request.toQueryParameters(),
     );

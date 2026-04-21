@@ -5,8 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../util/secure_storage_helper.dart';
 
 class MemberService {
-  static String get baseUrl =>
-      dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:8080';
+  static String get baseUrl {
+    final url = dotenv.env['BASE_URL'];
+    return (url == null || url.isEmpty) ? 'http://10.0.2.2:8080' : url;
+  }
 
   final _storage = SecureStorageHelper();
 
