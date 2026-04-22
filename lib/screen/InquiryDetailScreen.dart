@@ -2,8 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class InquiryDetailScreen extends StatelessWidget {
-  // InquiryScreen에서 넘겨받을 데이터 변수
-  final Map<String, String> inquiryData;
+  final Map<String, dynamic> inquiryData;
 
   const InquiryDetailScreen({super.key, required this.inquiryData});
 
@@ -11,10 +10,17 @@ class InquiryDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isDone = inquiryData['status'] == '답변완료';
+    // 1. 데이터 안전하게 추출 (Null이면 빈 문자열 처리)
+    final status = inquiryData['status']?.toString() ?? '대기중';
+    final category = inquiryData['category']?.toString() ?? '일반';
+    final date = inquiryData['date']?.toString() ?? '';
+    final title = inquiryData['title']?.toString() ?? '제목 없음';
+    final content = inquiryData['content']?.toString() ?? '내용 없음';
+
+    bool isDone = status == '답변완료';
 
     return Scaffold(
-      backgroundColor: Colors.white, // 상세 페이지는 깨끗한 화이트 배경
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('문의 상세 보기', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
         backgroundColor: Colors.white,
@@ -27,7 +33,6 @@ class InquiryDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. 헤더 영역 (상태 배지, 카테고리, 날짜)
             Row(
               children: [
                 Container(
@@ -37,50 +42,42 @@ class InquiryDetailScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    inquiryData['status']!,
+                    status,
                     style: TextStyle(color: isDone ? classicBlue : Colors.grey[600], fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text('[${inquiryData['category']}]', style: TextStyle(color: classicBlue, fontWeight: FontWeight.w500, fontSize: 13)),
+                Text('[$category]', style: TextStyle(color: classicBlue, fontWeight: FontWeight.w500, fontSize: 13)),
                 const Spacer(),
-                Text(inquiryData['date']!, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(date, style: const TextStyle(color: Colors.grey, fontSize: 12)),
               ],
             ),
             const SizedBox(height: 16),
-
-            // 2. 제목 영역
-            Text(
-              inquiryData['title']!,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 24),
-            const Divider(), // 구분선
+            const Divider(),
             const SizedBox(height: 24),
-
-            // 3. 문의 내용 영역
             const Text('문의 내용', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 12),
-            Text(
-              inquiryData['content']!,
-              style: const TextStyle(fontSize: 15, color: Colors.black87, height: 1.6), // 가독성을 위한 줄간격
-            ),
+            Text(content, style: const TextStyle(fontSize: 15, color: Colors.black87, height: 1.6)),
             const SizedBox(height: 40),
 
-            // 4. 답변 영역 (답변이 있을 때만 표시)
-            if (isDone) _buildReplyBox() else _buildWaitingBox(),
+            // 2. 답변 영역: reply 데이터가 있으면 전달
+            if (isDone)
+              _buildReplyBox(inquiryData['reply']?.toString() ?? '답변 내용이 없습니다.')
+            else
+              _buildWaitingBox(),
           ],
         ),
       ),
     );
   }
 
-  // 답변 완료 박스 위젯
-  Widget _buildReplyBox() {
+  Widget _buildReplyBox(String replyText) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F6FA), // 아주 연한 블루톤 배경
+        color: const Color(0xFFF1F6FA),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -94,24 +91,17 @@ class InquiryDetailScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Text(
-            inquiryData['reply']!,
-            style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.5),
-          ),
+          Text(replyText, style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.5)),
         ],
       ),
     );
   }
 
-  // 답변 대기 중 박스 위젯!
   Widget _buildWaitingBox() {
     return Container(
       padding: const EdgeInsets.all(20),
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
       child: Center(
         child: Text(
           '답변을 기다리고 있습니다.\n빠른 시일 내에 답변해 드리겠습니다.',

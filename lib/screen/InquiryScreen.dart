@@ -1,5 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:second_trip_project/util/secure_storage_helper.dart'; // 저장소 헬퍼 사용
 import 'WriteInquiryScreen.dart';
 import 'InquiryDetailScreen.dart';
 
@@ -12,49 +15,67 @@ class InquiryScreen extends StatefulWidget {
 
 class _InquiryScreenState extends State<InquiryScreen> {
   final Color classicBlue = const Color(0xFFF7323F);
+  List<dynamic> inquiries = [];
+  final _storage = SecureStorageHelper(); // 저장소 헬퍼 객체
 
-  // 1. 문의 내역 데이터 (나중에 DB와 연동될 리스트)
-  List<Map<String, String>> inquiries = [
-    {
-      'title': '비행기 예약 취소 관련 문의드립니다.',
-      'date': '2026.04.14',
-      'category': '취소/환불',
-      'status': '답변완료',
-      'content': '갑작스런 일정 변경으로 취소하고 싶은데 수수료가 얼마나 나오는지, 환불 규정은 어떻게 되는지 궁금합니다.',
-      'reply': '안녕하세요, 트래블허브입니다. 해당 건은 항공사 규정에 따라 취소 시 5만원의 위약금이 발생합니다.'
-    },
-    {
-      'title': '호텔 체크인 시간 변경 가능한가요?',
-      'date': '2026.04.12',
-      'category': '이용문의',
-      'status': '검토중',
-      'content': '오후 2시쯤 도착할 것 같은데 혹시 얼리 체크인이 가능할까요?',
-      'reply': ''
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    fetchInquiries();
+  }
 
-  // ⭐ 2. 작성 페이지로 이동하고 결과 받아오는 함수
+  Future<void> fetchInquiries() async {
+    // 1. 토큰 가져오기 (WriteInquiryScreen과 동일하게)
+    String? token = await _storage.getAccessToken();
+
+    if (token == null || token.isEmpty || token == "null") {
+      debugPrint("토큰 없음: 조회 불가능");
+      return;
+    }
+
+    // 2. 헤더에 Authorization 추가
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/api/inquiries'), // 서버가 mid를 토큰에서 추출하도록 주소 수정 권장
+      headers: {
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    debugPrint("조회 응답 코드: ${response.statusCode}");
+    debugPrint("조회 응답 내용: ${response.body}");
+
+    if (response.statusCode == 200) {
+      setState(() {
+        inquiries = jsonDecode(utf8.decode(response.bodyBytes));
+      });
+    }
+  }
+
+// InquiryScreen.dart 파일 수정
   Future<void> _goToWriteScreen() async {
-    // Navigator.push가 완료될 때까지 await(기다림)!
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const WriteInquiryScreen()),
     );
 
-    // ⭐ 작성 페이지에서 데이터를 가지고 돌아왔을 때 (등록 버튼 클릭 시)
-    if (result != null && result is Map<String, String>) {
+    // 결과가 true(문의 성공)로 돌아오면
+    if (result == true) {
+      // 1. 기존 리스트 비우기
       setState(() {
-        // 리스트 맨 앞에 추가!
-        inquiries.insert(0, result);
+        inquiries = [];
       });
+      // 2. 서버에서 데이터 다시 가져오기
+      await fetchInquiries();
 
-      // 등록 완료 안내
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('문의가 정상적으로 등록되었습니다.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('문의 내역을 새로 불러왔습니다.')),
+        );
+      }
     }
   }
 
+  // ... 이하 build 및 기타 메서드는 그대로 유지
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,11 +88,8 @@ class _InquiryScreenState extends State<InquiryScreen> {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: _goToWriteScreen, // ⭐ 수정된 함수 연결
-            child: Text(
-              '문의하기',
-              style: TextStyle(color: classicBlue, fontWeight: FontWeight.bold, fontSize: 14),
-            ),
+            onPressed: _goToWriteScreen,
+            child: Text('문의하기', style: TextStyle(color: classicBlue, fontWeight: FontWeight.bold, fontSize: 14)),
           ),
         ],
       ),
@@ -85,8 +103,8 @@ class _InquiryScreenState extends State<InquiryScreen> {
     );
   }
 
-  Widget _buildInquiryCard(Map<String, String> item) {
-    bool isDone = item['status'] == '답변완료';
+  Widget _buildInquiryCard(dynamic item) {
+    bool isDone = item['reply'] != null && item['reply'].toString().isNotEmpty;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
@@ -102,19 +120,20 @@ class _InquiryScreenState extends State<InquiryScreen> {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                item['status']!,
+                isDone ? '답변완료' : '검토중',
                 style: TextStyle(color: isDone ? classicBlue : Colors.grey[600], fontSize: 10, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(item['title']!, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+              child: Text(item['title'], overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
             ),
           ],
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 8.0),
-          child: Text(item['date']!, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+
+          child: Text(item['regDate'].toString().substring(0, 10), style: TextStyle(color: Colors.grey[400], fontSize: 12)),
         ),
         trailing: const Icon(CupertinoIcons.chevron_forward, size: 16, color: Colors.grey),
         onTap: () {

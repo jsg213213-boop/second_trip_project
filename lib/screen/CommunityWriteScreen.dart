@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart'; // 1. Dio 패키지 추가
 
 class CommunityWriteScreen extends StatefulWidget {
   const CommunityWriteScreen({super.key});
@@ -11,6 +12,36 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
   String _selectedCategory = '자유게시판';
+
+  // 2. 서버로 데이터를 보내는 함수
+  Future<void> _submitPost() async {
+    final dio = Dio();
+    // 에뮬레이터에서 내 컴퓨터 백엔드에 접근할 때는 10.0.2.2를 사용합니다.
+    final String url = 'http://10.0.2.2:8080/community/register';
+
+    try {
+      final response = await dio.post(
+        url,
+        data: {
+          'title': _titleController.text,
+          'content': _contentController.text,
+          'mid': 'testuser', // 백엔드에서 받는 필드명과 일치시켜야 합니다.
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print('서버 전송 성공!');
+        if (mounted) Navigator.pop(context, true); // 성공 시 화면 닫기
+      }
+    } catch (e) {
+      print('서버 전송 실패: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('서버 전송에 실패했습니다.')),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -28,30 +59,20 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
         elevation: 0.5,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.black),
-          onPressed: () => Navigator.pop(context), // 아무것도 안 보냄 (취소)
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text('글쓰기', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         actions: [
           TextButton(
             onPressed: () {
-              // 제목이나 내용이 비어있으면 등록 안 되게 막기
               if (_titleController.text.trim().isEmpty || _contentController.text.trim().isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('제목과 내용을 모두 입력해주세요.')),
                 );
                 return;
               }
-
-              // ⭐ 1. 입력된 데이터를 Map 형태로 만듭니다.
-              final Map<String, String> newPost = {
-                'category': _selectedCategory,
-                'title': _titleController.text,
-                'author': '박금동', // 현재 로그인한 사용자 이름 (더미)
-                'date': '방금 전',
-              };
-
-              // ⭐ 2. 데이터를 인자로 실어서 이전 화면으로 돌아갑니다.
-              Navigator.pop(context, newPost);
+              // 3. 기존 Navigator.pop 대신 서버 전송 함수 호출
+              _submitPost();
             },
             child: const Text('등록', style: TextStyle(color: Color(0xFFF7323F), fontWeight: FontWeight.bold, fontSize: 16)),
           ),
@@ -95,6 +116,6 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
         ),
       ),
     );
+
   }
 }
-

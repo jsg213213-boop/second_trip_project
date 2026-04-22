@@ -1,66 +1,31 @@
 import 'package:flutter/material.dart';
 
 class NoticeDetailScreen extends StatelessWidget {
-  const NoticeDetailScreen({super.key});
+  // 1. 데이터를 받을 변수를 'nullable(?를 붙임)'로 만듭니다.
+  final Map<String, String>? noticeData;
+
+  // 2. 'required'를 제거하고, 데이터 없이도 생성 가능하게 만듭니다.
+  const NoticeDetailScreen({super.key, this.noticeData});
 
   @override
   Widget build(BuildContext context) {
-    // 이전 화면에서 전달받은 데이터 추출
-    final notice = ModalRoute.of(context)!.settings.arguments as Map<String, String>;
+    // 3. 데이터가 없을 경우(routes로 들어온 경우) 처리
+    if (noticeData == null) {
+      return Scaffold(appBar: AppBar(title: const Text('오류')), body: const Center(child: Text('잘못된 접근입니다.')));
+    }
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('공지사항', style: TextStyle(color: Colors.black, fontSize: 18)),
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
+      appBar: AppBar(title: const Text('공지사항 상세')),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 헤더 영역
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    notice['tag']!,
-                    style: const TextStyle(color: Color(0xFFF7323F), fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    notice['title']!,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, height: 1.4),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    notice['date']!,
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(thickness: 1, height: 1),
-            // 본문 영역
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Text(
-                notice['content']!,
-                style: const TextStyle(fontSize: 16, height: 1.8, color: Colors.black87),
-              ),
-            ),
+            Text(noticeData!['title']!, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Divider(),
+            Text(noticeData!['content']!),
           ],
         ),
       ),
     );
   }
-
-
 }

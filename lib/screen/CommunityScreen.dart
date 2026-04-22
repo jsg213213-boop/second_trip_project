@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-// ⚠️ 주의: CommunityWriteScreen.dart 파일의 실제 경로가 다르면 수정이 필요할 수 있습니다.
-import 'package:second_trip_project/screen/CommunityWriteScreen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:second_trip_project/util/secure_storage_helper.dart'; // 💡 문의하기와 동일한 경로
+import 'CommunityWriteScreen.dart';
+import 'CommunityDetailScreen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -10,120 +13,114 @@ class CommunityScreen extends StatefulWidget {
 }
 
 class _CommunityScreenState extends State<CommunityScreen> {
-  // 1. 현재 어떤 탭이 선택되었는지 저장
-  String selectedTab = '전체';
+  List<dynamic> allPosts = [];
+  bool isLoading = true;
+  String errorMessage = "";
+  final _storage = SecureStorageHelper(); // 💡 문의하기와 동일한 저장소 헬퍼 사용
 
-  // 2. 상단 카테고리 목록
-  final List<String> categories = ['전체', '자유게시판', '여행후기', '질문답변'];
+  @override
+  void initState() {
+    super.initState();
+    _fetchPosts();
+  }
 
-  // 3. 샘플 데이터 (나중에 서버 연동 시 데이터 구조에 맞춰 수정하세요)
-  final List<Map<String, String>> allPosts = [
-    {'category': '여행후기', 'title': '부산 해운대 야경 명소 추천!', 'author': '여행가A'},
-    {'category': '자유게시판', 'title': '이번 주말 경주 날씨 어때요?', 'author': '금동이'},
-    {'category': '질문답변', 'title': '일본 비자 발급 질문입니다.', 'author': '초보자'},
-    {'category': '여행후기', 'title': '도쿄 신주쿠 맛집 리스트 공유', 'author': '미식가'},
-  ];
+  Future<void> _fetchPosts() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = "";
+    });
+
+    try {
+      // 1. 토큰 가져오기 (문의하기 로직과 동일)
+      String? token = await _storage.getAccessToken();
+
+      if (token == null || token.isEmpty || token == "null") {
+        setState(() {
+          isLoading = false;
+          errorMessage = "로그인이 필요합니다.\n다시 로그인해 주세요.";
+        });
+        return;
+      }
+
+      // 2. Authorization 헤더 포함하여 요청
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8080/community/list'),
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          allPosts = jsonDecode(utf8.decode(response.bodyBytes));
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          isLoading = false;
+          errorMessage = "서버 요청 실패 (상태: ${response.statusCode})";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        errorMessage = "서버 연결에 실패했습니다.";
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 필터링 로직: 선택된 탭에 맞는 글만 추출
-    final filteredPosts = selectedTab == '전체'
-        ? allPosts
-        : allPosts.where((post) => post['category'] == selectedTab).toList();
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('커뮤니티', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
+        title: const Text('커뮤니티', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // --- 상단 카테고리 탭 영역 ---
-          SizedBox(
-            height: 60,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                return _buildTabItem(categories[index]);
-              },
-            ),
-          ),
-
-          // --- 게시글 리스트 영역 ---
-          Expanded(
-            child: ListView.separated(
-              itemCount: filteredPosts.length,
-              separatorBuilder: (context, index) => const Divider(height: 1, color: Colors.black12),
-              itemBuilder: (context, index) {
-                return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  title: Text(filteredPosts[index]['title']!),
-                  subtitle: Text("${filteredPosts[index]['category']} | ${filteredPosts[index]['author']}"),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-      // --- 글쓰기 버튼 (이제 정상 작동합니다) ---
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          // ⭐ Navigator.push 앞에 'final newPost = await'를 붙여서 결과값을 기다립니다.
-          final newPost = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CommunityWriteScreen(),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : errorMessage.isNotEmpty
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 10),
+            Text(errorMessage, textAlign: TextAlign.center),
+            const SizedBox(height: 20),
+            ElevatedButton(onPressed: _fetchPosts, child: const Text("다시 시도"))
+          ],
+        ),
+      )
+          : allPosts.isEmpty
+          ? const Center(child: Text("작성된 글이 없습니다."))
+          : ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        itemCount: allPosts.length,
+        itemBuilder: (context, i) {
+          final item = allPosts[i];
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(16),
+              title: Text(item['title'] ?? '제목 없음', style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text("작성자: ${item['mid'] ?? '익명'}"),
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => CommunityDetailScreen(post: item))),
             ),
           );
-
-          // ⭐ 만약 돌아온 데이터(newPost)가 있다면 리스트에 추가합니다.
-          if (newPost != null && newPost is Map<String, String>) {
-            setState(() {
-              // allPosts 리스트의 맨 앞에 추가 (최신글이 위로 오게)
-              allPosts.insert(0, newPost);
-            });
-
-            // 등록 완료 알림 (선택사항)
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('게시글이 등록되었습니다.')),
-            );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          // 글 작성 후 돌아왔을 때 목록 새로고침
+          if (await Navigator.push(context, MaterialPageRoute(builder: (_) => const CommunityWriteScreen())) == true) {
+            _fetchPosts();
           }
         },
-        backgroundColor: const Color(0xFFF7323F),
+        backgroundColor: Colors.red,
         child: const Icon(Icons.edit, color: Colors.white),
-      ),
-    );
-  }
-
-  // 탭 버튼 위젯 빌더
-  Widget _buildTabItem(String label) {
-    bool isSelected = selectedTab == label;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedTab = label; // 선택 시 화면 갱신 및 필터링 적용
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 5),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF7323F) : Colors.grey[200],
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
       ),
     );
   }
