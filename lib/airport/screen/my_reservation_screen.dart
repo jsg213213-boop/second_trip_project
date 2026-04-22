@@ -778,7 +778,6 @@ class _MyReservationScreenState extends State<MyReservationScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('패키지 예약', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
-                Text('상태: $status', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
               ],
             ),
             const Divider(height: 20),
@@ -791,9 +790,8 @@ class _MyReservationScreenState extends State<MyReservationScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Text('${FormatUtils.price(item['totalPrice'])}원',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                const SizedBox(width: 8),
+                Text('${FormatUtils.price(item['totalPrice'])}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),const SizedBox(width: 8),
                 TextButton(
                   onPressed: () {
                     _showDeleteConfirmDialog(context, item['reservationId']);

@@ -33,23 +33,14 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
 
   // --- 1. 비즈니스 로직 ---
 
+  // 예약 처리 함수
   Future<void> _processBooking(BuildContext context) async {
+    // 1. 테스트 모드 확인
     if (PackageDetailScreen.isTesting) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("테스트 패키지 예약이 완료되었습니다!")),
-      );
+      _showSuccessSnackBar(context, "테스트 예약이 완료되었습니다!");
       return;
     }
 
-    // 로그인 상태 체크
-    final bool isLoggedIn = await _memberService.checkLoginStatus();
-    if (!isLoggedIn) {
-      if (!context.mounted) return;
-      _showLoginDialog(context);
-      return;
-    }
-
-    // 예약 API 호출 로직
     try {
       final String accessToken = await _memberService.getAccessToken() ?? '';
       final int totalPrice = widget.item.price * _selectedPeople;
@@ -67,66 +58,37 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       if (!context.mounted) return;
 
       if (reservationId != null) {
-        // 예약 성공 시 모달창 띄우기
-        _showReservationSuccessDialog(context, reservationId);
+        // 성공 시 토스트바(스낵바) 띄우기
+        _showSuccessSnackBar(context, "🎉 예약이 성공적으로 완료되었습니다!");
+
+        // 추가로 성공 확인창을 띄우고 싶다면 아래 주석을 해제하세요
+        // _showReservationSuccessDialog(context, reservationId);
       } else {
         throw Exception('서버 응답 오류');
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("예약에 실패했습니다.")),
+          const SnackBar(content: Text("⚠️ 예약에 실패했습니다. 다시 시도해주세요."), backgroundColor: Colors.red),
         );
       }
     }
   }
 
+  // 성공 스낵바(토스트) 띄우는 함수
+  void _showSuccessSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   // --- 2. UI 및 다이얼로그 ---
 
-  void _showLoginDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("로그인 필요"),
-        content: const Text("로그인 후 이용 가능한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?"),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("취소")
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/login');
-            },
-            child: const Text("로그인하러 가기"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // [수정] 예약 성공 모달창 추가
-  void _showReservationSuccessDialog(BuildContext context, int reservationId) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text("🎉 예약 완료"),
-        content: Text("${widget.item.title} 예약이 완료되었습니다!\n예약 번호: $reservationId"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // 다이얼로그 닫기
-              Navigator.pop(context); // 상세 페이지 닫기 (이전 화면으로 복귀)
-            },
-            child: const Text("확인"),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // 예약 확인 다이얼로그
   void _showReservationConfirmDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -140,10 +102,31 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
-              await _processBooking(context);
+              Navigator.pop(context); // 다이얼로그 닫고
+              await _processBooking(context); // 예약 처리 시작
             },
             child: const Text("확인"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 로그인 필요 안내
+  void _showLoginDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("로그인 필요"),
+        content: const Text("로그인 후 이용 가능한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("취소")),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/login');
+            },
+            child: const Text("로그인하러 가기"),
           ),
         ],
       ),

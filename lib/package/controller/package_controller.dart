@@ -6,6 +6,16 @@ class PackageController {
   // 앱 내에서 사용할 패키지 리스트
   List<PackageItem> packageList = [];
 
+  /// 검색 로직 추가
+  List<PackageItem> searchPackages(String query) {
+    if (query.isEmpty) return packageList;
+    return packageList.where((item) =>
+    item.title.toLowerCase().contains(query.toLowerCase()) ||
+        item.region.toLowerCase().contains(query.toLowerCase())
+    ).toList();
+  }
+
+
   /// assets에 있는 JSON 파일을 읽어와서 객체 리스트로 변환합니다.
   Future<void> loadPackages() async {
     try {
