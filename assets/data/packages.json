@@ -1,0 +1,369 @@
+[
+  {
+    "id": 1001,
+    "category": "Best",
+    "title": "[제주] 서귀포 3박 4일 패키지",
+    "description": "푸른 제주 바다와 한라산의 정기",
+    "region": "제주",
+    "thumbnail": "https://picsum.photos/id/1015/600/400",
+    "price": 350000,
+    "tags": ["#제주여행", "#힐링"],
+    "inclusions": ["숙박", "식사"],
+    "exclusions": ["항공료"],
+    "flightInfo": {"outbound": "KE1201", "inbound": "KE1202"},
+    "itinerary": [
+      {"day": 1, "activities": ["공항도착", "숙소 체크인", "서귀포 올레시장"]},
+      {"day": 2, "activities": ["한라산 영실코스", "중문 관광단지"]},
+      {"day": 3, "activities": ["성산일출봉", "섭지코지", "해안도로 드라이브"]},
+      {"day": 4, "activities": ["동문시장 기념품 구매", "공항 이동"]}
+    ]
+  },
+  {
+    "id": 1002,
+    "category": "Special",
+    "title": "[서울] 5성급 호캉스 2박 3일",
+    "description": "도심 속에서 즐기는 럭셔리 휴식",
+    "region": "서울",
+    "thumbnail": "https://picsum.photos/id/1031/600/400",
+    "price": 580000,
+    "tags": ["#호캉스", "#럭셔리"],
+    "inclusions": ["조식", "수영장"],
+    "exclusions": ["중식"],
+    "flightInfo": {"outbound": "KTX", "inbound": "KTX"},
+    "itinerary": [
+      {"day": 1, "activities": ["체크인", "호텔 디너"]},
+      {"day": 2, "activities": ["수영장 이용", "서울 야경 투어"]},
+      {"day": 3, "activities": ["조식", "체크아웃"]}
+    ]
+  },
+  {
+    "id": 1003,
+    "category": "Season",
+    "title": "[부산] 해운대 오션뷰 2박 3일",
+    "description": "파도 소리와 함께하는 부산 바다",
+    "region": "부산",
+    "thumbnail": "https://picsum.photos/id/1016/600/400",
+    "price": 290000,
+    "tags": ["#바다", "#맛집"],
+    "inclusions": ["해변열차", "조식"],
+    "exclusions": ["카페비"],
+    "flightInfo": {"outbound": "SRT", "inbound": "SRT"},
+    "itinerary": [
+      {"day": 1, "activities": ["역도착", "해운대 해수욕장 산책"]},
+      {"day": 2, "activities": ["해변열차 탑승", "달맞이길 카페거리"]},
+      {"day": 3, "activities": ["조식", "기념품샵 투어", "역 이동"]}
+    ]
+  },
+  {
+    "id": 1004,
+    "category": "Event",
+    "title": "[강릉] 안목해변 커피거리 1박 2일",
+    "description": "커피 향 가득한 강릉 여행",
+    "region": "강릉",
+    "thumbnail": "https://picsum.photos/id/1074/600/400",
+    "price": 150000,
+    "tags": ["#커피", "#힐링"],
+    "inclusions": ["호텔", "커피쿠폰"],
+    "exclusions": ["교통비"],
+    "flightInfo": {"outbound": "시외버스", "inbound": "시외버스"},
+    "itinerary": [
+      {"day": 1, "activities": ["커피거리", "숙소"]},
+      {"day": 2, "activities": ["강문해변", "귀가"]}
+    ]
+  },
+  {
+    "id": 1005,
+    "category": "Best",
+    "title": "[경주] 역사와 낭만, 황리단길 투어",
+    "description": "천년 고도의 아름다움을 찾아서",
+    "region": "경주",
+    "thumbnail": "https://picsum.photos/id/1025/600/400",
+    "price": 210000,
+    "tags": ["#역사", "#문화"],
+    "inclusions": ["숙박", "가이드"],
+    "exclusions": ["입장료"],
+    "flightInfo": {"outbound": "KTX", "inbound": "KTX"},
+    "itinerary": [
+      {"day": 1, "activities": ["대릉원", "황리단길"]},
+      {"day": 2, "activities": ["불국사", "귀가"]}
+    ]
+  },
+  {
+    "id": 1006,
+    "category": "Season",
+    "title": "[제주] 올레길 걷기 여행 4박 5일",
+    "description": "자연과 함께 걷는 진정한 여행",
+    "region": "제주",
+    "thumbnail": "https://picsum.photos/id/1084/600/400",
+    "price": 420000,
+    "tags": ["#도보", "#자연"],
+    "inclusions": ["숙박", "조식"],
+    "exclusions": ["개인경비"],
+    "flightInfo": {"outbound": "대한항공", "inbound": "대한항공"},
+    "itinerary": [
+      {"day": 1, "activities": ["공항 도착", "올레길 1코스"]},
+      {"day": 2, "activities": ["올레길 2코스", "중식"]},
+      {"day": 3, "activities": ["올레길 3코스", "숙소 휴식"]},
+      {"day": 4, "activities": ["올레길 4코스", "로컬 맛집 탐방"]},
+      {"day": 5, "activities": ["올레길 5코스", "공항 이동"]}
+    ]
+  },
+  {
+    "id": 1007,
+    "category": "Best",
+    "title": "[서울] 궁궐 투어와 맛집 탐방",
+    "description": "서울의 과거와 현재를 모두 체험",
+    "region": "서울",
+    "thumbnail": "https://picsum.photos/id/1040/600/400",
+    "price": 280000,
+    "tags": ["#궁궐", "#맛집"],
+    "inclusions": ["한복체험", "호텔"],
+    "exclusions": ["식사"],
+    "flightInfo": {"outbound": "지하철", "inbound": "지하철"},
+    "itinerary": [
+      {"day": 1, "activities": ["경복궁", "북촌"]},
+      {"day": 2, "activities": ["인사동", "명동 쇼핑"]}
+    ]
+  },
+  {
+    "id": 1008,
+    "category": "Season",
+    "title": "[부산] 요트 투어 패키지",
+    "description": "광안대교를 배경으로 한 요트 체험",
+    "region": "부산",
+    "thumbnail": "https://picsum.photos/id/1050/600/400",
+    "price": 330000,
+    "tags": ["#요트", "#야경"],
+    "inclusions": ["요트탑승권", "호텔"],
+    "exclusions": ["기타식사"],
+    "flightInfo": {"outbound": "SRT", "inbound": "SRT"},
+    "itinerary": [
+      {"day": 1, "activities": ["요트체험", "숙소"]},
+      {"day": 2, "activities": ["광안리 해수욕장", "귀가"]}
+    ]
+  },
+  {
+    "id": 1009,
+    "category": "Special",
+    "title": "[강릉] 정동진 일출 기차여행",
+    "description": "바다 위에서 맞이하는 최고의 일출",
+    "region": "강릉",
+    "thumbnail": "https://picsum.photos/id/1055/600/400",
+    "price": 180000,
+    "tags": ["#일출", "#기차"],
+    "inclusions": ["왕복기차", "숙박"],
+    "exclusions": ["조식"],
+    "flightInfo": {"outbound": "무궁화호", "inbound": "무궁화호"},
+    "itinerary": [
+      {"day": 1, "activities": ["기차여행", "정동진"]},
+      {"day": 2, "activities": ["안목해변", "귀가"]}
+    ]
+  },
+  {
+    "id": 1010,
+    "category": "Event",
+    "title": "[경주] 야경 명소 투어 패키지",
+    "description": "동궁과 월지의 환상적인 야경",
+    "region": "경주",
+    "thumbnail": "https://picsum.photos/id/1059/600/400",
+    "price": 195000,
+    "tags": ["#야경", "#인생샷"],
+    "inclusions": ["숙박", "가이드"],
+    "exclusions": ["기타비용"],
+    "flightInfo": {"outbound": "KTX", "inbound": "KTX"},
+    "itinerary": [
+      {"day": 1, "activities": ["동궁과월지", "숙소"]},
+      {"day": 2, "activities": ["첨성대", "귀가"]}
+    ]
+  },
+  {
+    "id": 1011,
+    "category": "Event",
+    "title": "[제주] 에코랜드 숲속 기차여행",
+    "description": "곶자왈 숲속을 달리는 낭만적인 기차",
+    "region": "제주",
+    "thumbnail": "https://picsum.photos/id/1080/600/400",
+    "price": 270000,
+    "tags": ["#숲", "#가족"],
+    "inclusions": ["입장권", "숙박"],
+    "exclusions": ["항공료"],
+    "flightInfo": {"outbound": "진에어", "inbound": "진에어"},
+    "itinerary": [
+      {"day": 1, "activities": ["에코랜드", "숙소"]},
+      {"day": 2, "activities": ["사려니숲길", "공항이동"]}
+    ]
+  },
+  {
+    "id": 1012,
+    "category": "Best",
+    "title": "[서울] 한강 리버버스 & 야경 크루즈",
+    "description": "물 위에서 즐기는 서울의 화려한 밤",
+    "region": "서울",
+    "thumbnail": "https://picsum.photos/id/1020/600/400",
+    "price": 310000,
+    "tags": ["#한강", "#야경"],
+    "inclusions": ["크루즈티켓", "조식"],
+    "exclusions": ["중식"],
+    "flightInfo": {"outbound": "자차", "inbound": "자차"},
+    "itinerary": [
+      {"day": 1, "activities": ["한강공원", "크루즈"]},
+      {"day": 2, "activities": ["여의도 공원", "귀가"]}
+    ]
+  },
+  {
+    "id": 1013,
+    "category": "Special",
+    "title": "[부산] 감천문화마을 스냅 투어",
+    "description": "알록달록 마을에서 인생 사진 남기기",
+    "region": "부산",
+    "thumbnail": "https://picsum.photos/id/1056/600/400",
+    "price": 240000,
+    "tags": ["#인생샷", "#문화"],
+    "inclusions": ["스냅작가", "숙박"],
+    "exclusions": ["개인경비"],
+    "flightInfo": {"outbound": "KTX", "inbound": "KTX"},
+    "itinerary": [
+      {"day": 1, "activities": ["감천문화마을", "카페"]},
+      {"day": 2, "activities": ["남포동 투어", "귀가"]}
+    ]
+  },
+  {
+    "id": 1014,
+    "category": "Best",
+    "title": "[강릉] 경포호수 자전거 힐링",
+    "description": "호숫가 바람을 맞으며 달리는 자유",
+    "region": "강릉",
+    "thumbnail": "https://picsum.photos/id/1047/600/400",
+    "price": 190000,
+    "tags": ["#자전거", "#힐링"],
+    "inclusions": ["자전거대여", "숙박"],
+    "exclusions": ["식사"],
+    "flightInfo": {"outbound": "시외버스", "inbound": "시외버스"},
+    "itinerary": [
+      {"day": 1, "activities": ["경포호수", "숙소"]},
+      {"day": 2, "activities": ["강문해변", "귀가"]}
+    ]
+  },
+  {
+    "id": 1015,
+    "category": "Special",
+    "title": "[경주] 불국사 템플스테이",
+    "description": "고즈넉한 사찰에서의 명상과 휴식",
+    "region": "경주",
+    "thumbnail": "https://picsum.photos/id/1005/600/400",
+    "price": 220000,
+    "tags": ["#템플스테이", "#힐링"],
+    "inclusions": ["사찰체험", "식사"],
+    "exclusions": ["교통비"],
+    "flightInfo": {"outbound": "고속버스", "inbound": "고속버스"},
+    "itinerary": [
+      {"day": 1, "activities": ["불국사", "명상"]},
+      {"day": 2, "activities": ["다도체험", "귀가"]}
+    ]
+  },
+  {
+    "id": 1016,
+    "category": "Season",
+    "title": "[제주] 서귀포 감귤 따기 체험",
+    "description": "달콤한 제주의 향기를 직접 수확하세요",
+    "region": "제주",
+    "thumbnail": "https://picsum.photos/id/1012/600/400",
+    "price": 320000,
+    "tags": ["#체험", "#농장"],
+    "inclusions": ["체험비", "숙박"],
+    "exclusions": ["항공료"],
+    "flightInfo": {"outbound": "제주항공", "inbound": "제주항공"},
+    "itinerary": [
+      {"day": 1, "activities": ["감귤농장", "숙소"]},
+      {"day": 2, "activities": ["제주 시내 관광", "공항이동"]}
+    ]
+  },
+  {
+    "id": 1017,
+    "category": "Event",
+    "title": "[서울] 홍대 버스킹 & 쇼핑 패키지",
+    "description": "트렌디한 거리에서 즐기는 주말",
+    "region": "서울",
+    "thumbnail": "https://picsum.photos/id/1035/600/400",
+    "price": 260000,
+    "tags": ["#쇼핑", "#공연"],
+    "inclusions": ["숙박", "문화상품권"],
+    "exclusions": ["기타비용"],
+    "flightInfo": {"outbound": "지하철", "inbound": "지하철"},
+    "itinerary": [
+      {"day": 1, "activities": ["홍대", "공연관람"]},
+      {"day": 2, "activities": ["연남동 카페", "귀가"]}
+    ]
+  },
+  {
+    "id": 1018,
+    "category": "Best",
+    "title": "[부산] 송도 케이블카 투어",
+    "description": "바다 위를 나는 짜릿한 공중 산책",
+    "region": "부산",
+    "thumbnail": "https://picsum.photos/id/1070/600/400",
+    "price": 280000,
+    "tags": ["#액티비티", "#바다"],
+    "inclusions": ["케이블카", "호텔"],
+    "exclusions": ["식사"],
+    "flightInfo": {"outbound": "SRT", "inbound": "SRT"},
+    "itinerary": [
+      {"day": 1, "activities": ["송도해수욕장", "케이블카"]},
+      {"day": 2, "activities": ["자갈치시장", "귀가"]}
+    ]
+  },
+  {
+    "id": 1019,
+    "category": "Special",
+    "title": "[강릉] 대관령 양떼목장 힐링",
+    "description": "푸른 초원 위 귀여운 양들과 함께",
+    "region": "강릉",
+    "thumbnail": "https://picsum.photos/id/1019/600/400",
+    "price": 210000,
+    "tags": ["#목장", "#자연"],
+    "inclusions": ["입장권", "숙박"],
+    "exclusions": ["교통비"],
+    "flightInfo": {"outbound": "시외버스", "inbound": "시외버스"},
+    "itinerary": [
+      {"day": 1, "activities": ["양떼목장", "숙소"]},
+      {"day": 2, "activities": ["오죽헌", "귀가"]}
+    ]
+  },
+  {
+    "id": 1020,
+    "category": "Best",
+    "title": "[경주] 교촌마을 한복 체험",
+    "description": "전통 한옥 마을에서의 고풍스러운 하루",
+    "region": "경주",
+    "thumbnail": "https://picsum.photos/id/1029/600/400",
+    "price": 230000,
+    "tags": ["#한복", "#전통"],
+    "inclusions": ["한복대여", "숙박"],
+    "exclusions": ["입장료"],
+    "flightInfo": {"outbound": "KTX", "inbound": "KTX"},
+    "itinerary": [
+      {"day": 1, "activities": ["교촌마을", "한옥스테이"]},
+      {"day": 2, "activities": ["첨성대", "귀가"]}
+    ]
+  },
+  {
+    "id": 1021,
+    "category": "Season",
+    "title": "[봄꽃여행] 경주 벚꽃 투어 1박 2일",
+    "description": "봄바람 휘날리는 벚꽃길을 걷는 낭만 여행",
+    "region": "경주",
+    "thumbnail": "https://picsum.photos/id/1015/600/400",
+    "price": 199000,
+    "tags": ["#벚꽃", "#경주여행", "#봄나들이"],
+    "inclusions": ["숙박", "조식"],
+    "exclusions": ["중/석식"],
+    "flightInfo": {
+      "outbound": "KTX 경주행 (09:00)",
+      "inbound": "KTX 귀가행 (18:00)"
+    },
+    "itinerary": [
+      { "day": 1, "activities": ["경주역 도착", "벚꽃길 산책"] },
+      { "day": 2, "activities": ["불국사 관광", "경주역 출발"] }
+    ]
+  }
+]

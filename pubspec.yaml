@@ -2,7 +2,7 @@ name: second_trip_project
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none'
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -31,9 +31,40 @@ dependencies:
   flutter:
     sdk: flutter
 
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+
+  image_picker: ^1.0.7
+
+  # 상태 관리
+  flutter_riverpod: ^2.5.1
+  # HTTP 통신
+  dio: ^5.4.3
+  # 화면 라우팅
+  go_router: ^13.2.0
+  # 찜 목록 로컬 저장
+  shared_preferences: ^2.2.3
+  # 이미지 캐싱
+  cached_network_image: ^3.3.1
+  # 로딩 스켈레톤
+  shimmer: ^3.0.0
+  # 환경변수 (.env)
+  flutter_dotenv: ^5.1.0
+  # 지도
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.1
+  table_calendar: ^3.1.3
+  provider: ^6.1.2   # Provider 패키지
+  intl: ^0.20.2
+  #서버 통신
+  http: ^1.1.0
+  # 토큰 보안 저장
+  flutter_secure_storage: ^9.0.0
+
+
+
 
 dev_dependencies:
   flutter_test:
@@ -56,7 +87,11 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
+  assets:
+    #    - assets/images/logo.png # 하나의 이미지만 등록하기.
+    - assets/images/ # 폴더 내의 모든 파일을 등록(추천)
+    - assets/data/packages.json
+    - .env
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
@@ -87,3 +122,4 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
