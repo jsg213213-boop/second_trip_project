@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:second_trip_project/util/secure_storage_helper.dart';
 
 class WriteInquiryScreen extends StatefulWidget {
   const WriteInquiryScreen({super.key});
@@ -11,9 +15,66 @@ class _WriteInquiryScreenState extends State<WriteInquiryScreen> {
   final Color classicBlue = const Color(0xFFF7323F);
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
+  final _storage = SecureStorageHelper();
+
+  Future<String?> _getToken() async {
+    return await _storage.getAccessToken();
+  }
 
   String _selectedCategory = '기타';
   final List<String> _categories = ['예약/결제', '취소/환불', '이용문의', '기타'];
+
+  Future<void> _submitInquiry() async {
+    // 1. 토큰 읽기 및 로그 확인
+    String? token = await _getToken();
+    debugPrint("### 서버로 전송할 토큰 확인: $token");
+
+    if (token == null || token.isEmpty || token == "null") {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인 정보가 없습니다. 다시 로그인해주세요.')),
+      );
+      return;
+    }
+
+    final url = Uri.parse('http://10.0.2.2:8080/api/inquiries');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json; charset=UTF-8",
+          // 토큰이 올바르게 들어가는지 확인 (Bearer와 토큰 사이 공백 필수)
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({
+          "title": _titleController.text.trim(),
+          "content": _contentController.text.trim(),
+          "mid": "asd@naver.com",
+          "category": _selectedCategory
+        }),
+      );
+
+      debugPrint("서버 응답 코드: ${response.statusCode}");
+      debugPrint("서버 응답 본문: ${response.body}");
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('문의가 등록되었습니다.')));
+        Navigator.pop(context, true);
+      } else {
+        // 에러 발생 시 서버 응답 메시지를 상세히 보여줌
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('저장 실패(${response.statusCode}): ${response.body}')),
+        );
+      }
+    } catch (e) {
+      debugPrint("통신 에러 발생: $e");
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('서버 통신 중 에러가 발생했습니다.')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,27 +89,11 @@ class _WriteInquiryScreenState extends State<WriteInquiryScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              // ⭐ 1. 빈칸 체크 (제목이나 내용이 없으면 등록 안 되게!)
               if (_titleController.text.trim().isEmpty || _contentController.text.trim().isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('제목과 내용을 모두 입력해주세요.')),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('제목과 내용을 모두 입력해주세요.')));
                 return;
               }
-
-              // ⭐ 2. 전달할 데이터 맵 만들기
-              // InquiryScreen에서 사용하는 Key값들이랑 똑같이 맞춰야 해!
-              Map<String, String> newInquiry = {
-                'title': _titleController.text,
-                'date': '2026.04.15', // 오늘 날짜
-                'category': _selectedCategory,
-                'status': '접수완료',
-                'content': _contentController.text,
-                'reply': '', // 답변은 아직 없으니까 빈값
-              };
-
-              // ⭐ 3. 핵심! pop 할 때 데이터를 인자로 넣어주기
-              Navigator.pop(context, newInquiry);
+              _submitInquiry();
             },
             child: Text('등록', style: TextStyle(color: classicBlue, fontWeight: FontWeight.bold)),
           ),
@@ -69,7 +114,7 @@ class _WriteInquiryScreenState extends State<WriteInquiryScreen> {
             const SizedBox(height: 24),
             const Text('문의 내용', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 10),
-            _buildTextField(_contentController, '문의 내용을 상세히 입력해주세요 (최대 500자)', maxLines: 10),
+            _buildTextField(_contentController, '문의 내용을 상세히 입력해주세요', maxLines: 10),
           ],
         ),
       ),
