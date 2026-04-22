@@ -101,7 +101,7 @@ class RoutingScreen extends StatelessWidget {
         '/package_list': (context) => const PackageListScreen(),
 
         // [항공 - 황혜은]
-        '/airport':    (context) => const SearchScreen(),
+        '/airport':    (context) => const AirpostSearchScreen(),
         '/myairport':    (context) => const MyReservationScreen(),
       },
     );

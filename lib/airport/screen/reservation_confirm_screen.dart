@@ -257,8 +257,8 @@ class _ReservationConfirmScreenState extends State<ReservationConfirmScreen> {
                               onPressed: () {
                                 debugPrint('[ReservationConfirmScreen] 검색화면으로 전체 복귀');
                                 // 스택 전체 제거 → SearchScreen (첫 화면)으로 이동
-                                // Navigator.of(context).popUntil((route) => route.isFirst);
-                                Navigator.pushReplacementNamed(context, '/main');
+                                Navigator.of(context).popUntil((route) => route.isFirst);
+                                // Navigator.pushReplacementNamed(context, '/main');
                               },
                               child: const Text('확인'),
                             ),

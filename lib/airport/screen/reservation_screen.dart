@@ -454,13 +454,14 @@ class _ReservationScreenState extends State<ReservationScreen> {
     //   }
     //   return;
     // }
-    if (mounted) {
-      Navigator.push(context,
-        MaterialPageRoute(
-          builder: (_) => ReservationConfirmScreen(reservation: reservation),
-        ),
-      );
-    }
+    // 2번이라 주석처리함 20260422
+    // if (mounted) {
+    //   Navigator.push(context,
+    //     MaterialPageRoute(
+    //       builder: (_) => ReservationConfirmScreen(reservation: reservation),
+    //     ),
+    //   );
+    // }
 
     // 등록 성공 → ReservationConfirmScreen 이동
     if (mounted) {
@@ -809,4 +810,5 @@ class _ReservationScreenState extends State<ReservationScreen> {
 // - 탑승객 수가 선택 인원과 정확히 일치해야 '계속 예약' 버튼 활성화
 // - 소아/유아 가격 차등: FormatUtils.passengerPrice() 참고
 // - '예약자와 동일' 체크박스는 이름만 자동입력 (생년월일/성별은 직접 입력)
+
 // =============================================================================

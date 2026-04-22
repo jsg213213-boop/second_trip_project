@@ -8,14 +8,14 @@ import '../model/flight_item.dart';
 import '../utils/format_utils.dart';
 import 'flight_list_screen.dart';
 
-class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+class AirpostSearchScreen extends StatefulWidget {
+  const AirpostSearchScreen({super.key});
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  State<AirpostSearchScreen> createState() => _AirpostSearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class _AirpostSearchScreenState extends State<AirpostSearchScreen> {
 
   // ── 상태 변수 ─────────────────────────────────────────────
   // _isRoundTrip   : 편도(false) / 왕복(true) 선택 상태
@@ -51,7 +51,7 @@ class _SearchScreenState extends State<SearchScreen> {
           _retDate = picked.add(const Duration(days: 3));
         }
       });
-      debugPrint('[SearchScreen] 출발 날짜 선택: ${FormatUtils.dateApi(picked)}');
+      debugPrint('[AirpostSearchScreen] 출발 날짜 선택: ${FormatUtils.dateApi(picked)}');
     }
   }
 
@@ -66,7 +66,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
     if (picked != null) {
       setState(() => _retDate = picked);
-      debugPrint('[SearchScreen] 귀환 날짜 선택: ${FormatUtils.dateApi(picked)}');
+      debugPrint('[AirpostSearchScreen] 귀환 날짜 선택: ${FormatUtils.dateApi(picked)}');
     }
   }
 
@@ -78,7 +78,7 @@ class _SearchScreenState extends State<SearchScreen> {
       _selectedDep = _selectedArr;
       _selectedArr = temp;
     });
-    debugPrint('[SearchScreen] 교차 후 → 출발: $_selectedDep / 도착: $_selectedArr');
+    debugPrint('[AirpostSearchScreen] 교차 후 → 출발: $_selectedDep / 도착: $_selectedArr');
   }
 
   // ── 인원 선택 바텀시트 ────────────────────────────────────
@@ -202,10 +202,10 @@ class _SearchScreenState extends State<SearchScreen> {
   // 유효성 검사(출발/도착/중복) → 최근 검색 저장 →
   // FlightController.fetchInitial() 호출 → FlightListScreen 이동
   void _onSearch() {
-    debugPrint('[SearchScreen] 검색 버튼 눌림');
-    debugPrint('[SearchScreen] 출발: $_selectedDep / 도착: $_selectedArr');
-    debugPrint('[SearchScreen] 날짜: ${FormatUtils.dateApi(_depDate)}');
-    debugPrint('[SearchScreen] 왕복: $_isRoundTrip / 성인: $_adultCount / 소아: $_childCount / 유아: $_infantCount');
+    debugPrint('[AirpostSearchScreen] 검색 버튼 눌림');
+    debugPrint('[AirpostSearchScreen] 출발: $_selectedDep / 도착: $_selectedArr');
+    debugPrint('[AirpostSearchScreen] 날짜: ${FormatUtils.dateApi(_depDate)}');
+    debugPrint('[AirpostSearchScreen] 왕복: $_isRoundTrip / 성인: $_adultCount / 소아: $_childCount / 유아: $_infantCount');
 
     // 유효성 검사
     if (_selectedDep == null) {
@@ -247,7 +247,7 @@ class _SearchScreenState extends State<SearchScreen> {
       retDate:      _isRoundTrip ? _retDate : null,
     );
 
-    debugPrint('[SearchScreen] FlightListScreen 으로 이동');
+    debugPrint('[AirpostSearchScreen] FlightListScreen 으로 이동');
     Navigator.push(context, MaterialPageRoute(builder: (_) => const FlightListScreen()));
   }
 
@@ -271,7 +271,7 @@ class _SearchScreenState extends State<SearchScreen> {
               if (isDep) _selectedDep = airports[i].key;
               else       _selectedArr = airports[i].key;
             });
-            debugPrint('[SearchScreen] 공항 선택 → '
+            debugPrint('[AirpostSearchScreen] 공항 선택 → '
                 '${isDep ? "출발" : "도착"}: ${airports[i].key}');
             Navigator.pop(context);
           },
@@ -509,13 +509,14 @@ class _SearchScreenState extends State<SearchScreen> {
                   TextButton(
                     onPressed: () {
                       setState(() => _recentSearches.clear());
-                      debugPrint('[SearchScreen] 최근 검색 기록 전체 삭제');
+                      debugPrint('[AirpostSearchScreen] 최근 검색 기록 전체 삭제');
                     },
                     child: const Text('전체삭제',
                         style: TextStyle(color: AppColors.textSecondary)),
                   ),
                 ],
               ),
+              // 메모리(변수) 상에 임시로 저장
               ...(_recentSearches.map((r) => ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.history, color: AppColors.textSecondary),
@@ -526,12 +527,12 @@ class _SearchScreenState extends State<SearchScreen> {
                   icon: const Icon(Icons.close, size: 16, color: AppColors.textSecondary),
                   onPressed: () {
                     setState(() => _recentSearches.remove(r));
-                    debugPrint('[SearchScreen] 최근 검색 기록 개별 삭제: $r');
+                    debugPrint('[AirpostSearchScreen] 최근 검색 기록 개별 삭제: $r');
                   },
                 ),
                 onTap: () {
                   // TODO: 최근 검색 기록 클릭 시 해당 조건으로 재검색 기능 추가 예정
-                  debugPrint('[SearchScreen] 최근 검색 기록 클릭: $r');
+                  debugPrint('[AirpostSearchScreen] 최근 검색 기록 클릭: $r');
                 },
               ))),
             ],
@@ -574,7 +575,7 @@ class _SearchScreenState extends State<SearchScreen> {
 // - build()                 : 화면 구성
 // -----------------------------------------------------------------------------
 // [파일 흐름과 순서]
-// 1. 앱 진입 → SearchScreen 표시 (편도 기본값)
+// 1. 앱 진입 → AirpostSearchScreen 표시 (편도 기본값)
 // 2. 편도/왕복 탭 선택 → _isRoundTrip 변경 → 귀환 날짜 표시/숨김
 // 3. 출발지/도착지 선택 → _showAirportPicker() → _selectedDep/Arr 저장
 // 4. 날짜 선택 → _pickDepDate() / _pickRetDate()

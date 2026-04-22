@@ -12,6 +12,8 @@
   import '../utils/format_utils.dart';
   import '../../util/api_client.dart';
 import '../../car/util/car_format_util.dart';
+  import 'dart:convert';
+  import 'package:http/http.dart' as http;
 
 // ✅ package 추가
 enum BookingType { flight, rental, hotel, package }
@@ -28,6 +30,7 @@ class MyReservationScreen extends StatefulWidget {
 
 class _MyReservationScreenState extends State<MyReservationScreen> {
   final _scrollController = ScrollController();
+  late Future<List<dynamic>> _reservationFuture;
 
   String _mid = '';
 
@@ -36,6 +39,12 @@ class _MyReservationScreenState extends State<MyReservationScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _mid = await SecureStorageHelper().getUserMid() ?? '';
+
+      // 만약 패키지 타입이라면 데이터를 불러옴
+      if (widget.type == BookingType.package) {
+        _refreshList();
+      }
+
       debugPrint('[MyReservationScreen] 예약 목록 조회 시작 → mid: $_mid');
 
       switch (widget.type) {
@@ -58,6 +67,12 @@ class _MyReservationScreenState extends State<MyReservationScreen> {
         // TODO: 패키지 담당자 - 패키지 예약 목록 API 연결
           break;
       }
+    });
+  }
+
+  void _refreshList() {
+    setState(() {
+      _reservationFuture = ApiClient().getMyPackageReservations();
     });
   }
 
@@ -714,11 +729,142 @@ class _MyReservationScreenState extends State<MyReservationScreen> {
   }
 
   // ─────────────────────────────────────────────
-  // 패키지 (임시)
-  // TODO: 패키지 담당자 - 실제 패키지 예약 내역으로 교체
+  // 패키지 예약 리스트(마이페이지)
   // ─────────────────────────────────────────────
   Widget _packageBody() {
-    return _emptyView('패키지 예약 내역', '준비 중입니다.');
+    // TODO: ApiClient 혹은 PackageReservationController에서 패키지 예약 목록을 가져오는 함수로 변경하세요
+    return FutureBuilder<List<dynamic>>(future: ApiClient().getMyPackageReservations(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return _emptyView('오류 발생', '데이터를 불러오는 중 문제가 발생했습니다.');
+        }
+
+        final list = snapshot.data ?? [];
+        if (list.isEmpty) {
+          return _emptyView('패키지 예약 내역이 없습니다.', '여행 패키지를 예약해보세요!');
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: list.length,
+          itemBuilder: (context, index) {
+            final item = list[index];
+            return _packageReservationCard(context, item);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _packageReservationCard(BuildContext context, Map<String, dynamic> item) {
+    final status = item['status'] ?? 'PENDING';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('패키지 예약', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
+                Text('상태: $status', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              ],
+            ),
+            const Divider(height: 20),
+            Text(item['packageName'] ?? '패키지 상품', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('예약일: ${item['reservationDate']}', style: const TextStyle(fontSize: 13)),
+            Text('인원: ${item['peopleCount']}명', style: const TextStyle(fontSize: 13)),
+
+            // 삭제 버튼 행 추가
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text('${FormatUtils.price(item['totalPrice'])}원',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: () {
+                    _showDeleteConfirmDialog(context, item['reservationId']);
+                  },
+                  child: const Text('예약 취소하기', style: TextStyle(color: Colors.red)),
+                )
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+
+  // 패키지 예약 삭제(마이페이지)
+  // 삭제 확인 창
+  void _showDeleteConfirmDialog(BuildContext context, int reservationId) {
+    // 이 함수를 _MyReservationScreenState 클래스 안에 넣어주세요
+    Future<void> deleteReservation(int reservationId) async {
+      try {
+        // 1. ApiClient를 통해 서버에 삭제 요청을 보냅니다.
+        // (주의: ApiClient 클래스 안에 deleteReservation 메서드가 있어야 합니다!)
+        await ApiClient().deleteReservation(reservationId);
+
+        print('서버 삭제 요청 성공');
+      } catch (e) {
+        print('서버 삭제 요청 실패: $e');
+        throw e; // 에러가 발생하면 상위(다이얼로그)에서 잡을 수 있게 던져줍니다.
+      }
+    }
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("예약 삭제"),
+          content: const Text("정말 이 예약을 삭제하시겠습니까?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("취소"),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context); // 다이얼로그 닫기
+
+                try {
+                  // 1. 서버에 삭제 요청
+                  await deleteReservation(reservationId);
+
+                  // 2. 삭제 성공 알림
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("예약이 삭제되었습니다.")),
+                  );
+
+                  // 3. 리스트 새로고침
+                  _refreshList();
+
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("삭제 실패: $e")),
+                  );
+                }
+              },
+              child: const Text("삭제", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // ─────────────────────────────────────────────

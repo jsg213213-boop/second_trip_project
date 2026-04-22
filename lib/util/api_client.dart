@@ -160,6 +160,29 @@ class ApiClient {
     }
   }
 
+  // ─── 내 패키지 예약 목록 조회 ─────────────────────────
+  Future<List<dynamic>> getMyPackageReservations() async {
+    try {
+      final response = await dio.get('/api/package-reservations/my-package');
+      print('=== [DEBUG] 서버에서 보내준 원본 데이터 전체 ===');
+      print(response.data);
+      return response.data as List<dynamic>;
+    } catch (e) {
+      print('=== [DEBUG] 통신 중 에러 발생 ===');
+      print('에러 상세: $e'); // 에러 내용 전부 출력
+      return [];
+    }
+  }
+
+  // 예약 취소
+  Future<void> deleteReservation(int reservationId) async {
+    try {
+      await dio.delete('/api/package-reservations/$reservationId');
+    } catch (e) {
+      throw e;
+    }
+  }
+
   // ─── 예약 취소 ────────────────────────────────────
   Future<bool> cancelReservation(int reservationId) async {
     try {

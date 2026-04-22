@@ -4,17 +4,17 @@ import 'package:second_trip_project/package/model/package_item.dart';
 import 'package:second_trip_project/package/screen/package_detail_screen.dart';
 import 'package:second_trip_project/services/member_service.dart'; // import 확인!
 
-// // 1. 가짜 서비스 클래스 정의
-// class MockMemberService extends MemberService {
-//   @override
-//   Future<bool> checkLoginStatus() async => true; // 테스트를 위해 항상 로그인됨으로 설정
-// }
-
-// 실패 상황을 흉내내는 Mock도 만들 수 있습니다.
+// 1. 가짜 서비스 클래스 정의
 class MockMemberService extends MemberService {
   @override
-  Future<bool> checkLoginStatus() async => true;
+  Future<bool> checkLoginStatus() async => true; // 테스트를 위해 항상 로그인됨으로 설정
 }
+
+// // 실패 상황을 흉내내는 Mock도 만들 수 있습니다.
+// class MockMemberService extends MemberService {
+//   @override
+//   Future<bool> checkLoginStatus() async => true;
+// }
 
 
 void main() {

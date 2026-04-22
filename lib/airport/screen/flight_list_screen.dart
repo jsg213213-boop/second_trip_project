@@ -290,7 +290,7 @@ class _FlightListScreenState extends State<FlightListScreen> {
                     padding: EdgeInsets.all(16),
                     child: Center(
                       child: Text(
-                        '모든 항공편을 불러왔습니다 ✅',
+                        '모든 항공편을 불러왔습니다.',
                         style: TextStyle(color: AppColors.textSecondary),
                       ),
                     ),
