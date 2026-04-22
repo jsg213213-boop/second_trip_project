@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart'; // 1. Dio 패키지 추가
+import 'package:dio/dio.dart';
 
 class CommunityWriteScreen extends StatefulWidget {
   const CommunityWriteScreen({super.key});
@@ -11,12 +11,10 @@ class CommunityWriteScreen extends StatefulWidget {
 class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
-  String _selectedCategory = '자유게시판';
 
-  // 2. 서버로 데이터를 보내는 함수
+  // 2. 서버로 데이터를 보내는 함수 (카테고리 필드 제거)
   Future<void> _submitPost() async {
     final dio = Dio();
-    // 에뮬레이터에서 내 컴퓨터 백엔드에 접근할 때는 10.0.2.2를 사용합니다.
     final String url = 'http://10.0.2.2:8080/community/register';
 
     try {
@@ -25,13 +23,13 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
         data: {
           'title': _titleController.text,
           'content': _contentController.text,
-          'mid': 'testuser', // 백엔드에서 받는 필드명과 일치시켜야 합니다.
+          'mid': 'testuser',
         },
       );
 
       if (response.statusCode == 200) {
         print('서버 전송 성공!');
-        if (mounted) Navigator.pop(context, true); // 성공 시 화면 닫기
+        if (mounted) Navigator.pop(context, true);
       }
     } catch (e) {
       print('서버 전송 실패: $e');
@@ -71,7 +69,6 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
                 );
                 return;
               }
-              // 3. 기존 Navigator.pop 대신 서버 전송 함수 호출
               _submitPost();
             },
             child: const Text('등록', style: TextStyle(color: Color(0xFFF7323F), fontWeight: FontWeight.bold, fontSize: 16)),
@@ -82,18 +79,7 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            DropdownButtonFormField<String>(
-              value: _selectedCategory,
-              decoration: const InputDecoration(
-                labelText: '카테고리 선택',
-                border: OutlineInputBorder(),
-              ),
-              items: ['자유게시판', '여행후기', '질문답변']
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedCategory = val!),
-            ),
-            const SizedBox(height: 20),
+            // 💡 DropdownButtonFormField 위젯을 삭제했습니다.
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(
