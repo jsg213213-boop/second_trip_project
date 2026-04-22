@@ -12,14 +12,14 @@ class ReservationService {
 
     // 3. print 문을 API 호출 전으로 이동 (함수 호출 인자 안에서는 print를 사용할 수 없습니다)
     print('🚀 요청 전송 시도');
-    print('URL: $_baseUrl/api/reservations/');
+    print('URL: $_baseUrl/api/package-reservations/');
     print('Token: $token');
     print('Body: ${dto.toJson()}');
 
     try {
       // 4. API 호출 (중복 제거)
       final response = await _dio.post(
-        '$_baseUrl/api/reservations/',
+        '$_baseUrl/api/package-reservations/',
         data: dto.toJson(),
         options: Options(
           headers: {
