@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../controller/package_controller.dart';
 import '../model/package_item.dart';
 import 'package_detail_screen.dart';
+import '../../services/reservation_service.dart';
 
 class PackageListScreen extends StatefulWidget {
   const PackageListScreen({super.key});
@@ -12,7 +13,7 @@ class PackageListScreen extends StatefulWidget {
 }
 
 class _PackageListScreenState extends State<PackageListScreen> {
-  final PackageController _controller = PackageController();
+  final PackageController _controller = PackageController(ReservationService());
   final NumberFormat _numberFormat = NumberFormat('#,###');
   final TextEditingController _searchController = TextEditingController();
 

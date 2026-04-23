@@ -1,6 +1,7 @@
 // test/package_controller_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:second_trip_project/package/controller/package_controller.dart';
+import 'package:second_trip_project/services/reservation_service.dart';
 
 void main() {
 
@@ -8,7 +9,7 @@ void main() {
 
   group('PackageController 테스트', () {
     test('JSON 로드 및 파싱 확인', () async {
-      final controller = PackageController();
+      final controller = PackageController(ReservationService());
 
       // 테스트용 더미 데이터 로드
       await controller.loadPackages();
@@ -21,7 +22,7 @@ void main() {
     });
 
     test('카테고리별 필터링 확인', () async {
-      final controller = PackageController();
+      final controller = PackageController(ReservationService());
       await controller.loadPackages();
 
       // 'Best' 카테고리 상품만 필터링

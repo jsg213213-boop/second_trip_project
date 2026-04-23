@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../main.dart';
 import '../../services/member_service.dart';
 import '../../services/reservation_service.dart';
 import '../model/package_item.dart';
-import '../model/package_reservation_dto.dart';
+import '../controller/package_controller.dart'as ctrl;
+
 
 class PackageDetailScreen extends StatefulWidget {
   static bool isTesting = false;
@@ -31,51 +33,28 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
     _memberService = widget.memberService ?? MemberService();
   }
 
-  // --- 1. 비즈니스 로직 ---
-
-  // 예약 처리 함수
+  // 1. 예약 처리 함수 (독립적인 메서드)
   Future<void> _processBooking(BuildContext context) async {
-    // 1. 테스트 모드 확인
-    if (PackageDetailScreen.isTesting) {
-      _showSuccessSnackBar(context, "테스트 예약이 완료되었습니다!");
-      return;
-    }
+    final token = await _memberService.getAccessToken() ?? '';
+    final controller = ctrl.PackageController(ReservationService());
 
-    try {
-      final String accessToken = await _memberService.getAccessToken() ?? '';
-      final int totalPrice = widget.item.price * _selectedPeople;
+    final result = await controller.reservePackage(
+      token: token,
+      packageId: widget.item.id,
+      peopleCount: _selectedPeople,
+      price: widget.item.price,
+    );
 
-      final dto = PackageReservationDTO(
-        packageId: widget.item.id,
-        reservationDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        peopleCount: _selectedPeople,
-        totalPrice: totalPrice,
-      );
+    if (!context.mounted) return;
 
-      final ReservationService reservationService = ReservationService();
-      final reservationId = await reservationService.registerReservation(dto, accessToken);
-
-      if (!context.mounted) return;
-
-      if (reservationId != null) {
-        // 성공 시 토스트바(스낵바) 띄우기
-        _showSuccessSnackBar(context, "🎉 예약이 성공적으로 완료되었습니다!");
-
-        // 추가로 성공 확인창을 띄우고 싶다면 아래 주석을 해제하세요
-        // _showReservationSuccessDialog(context, reservationId);
-      } else {
-        throw Exception('서버 응답 오류');
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("⚠️ 예약에 실패했습니다. 다시 시도해주세요."), backgroundColor: Colors.red),
-        );
-      }
+    if (result != null) {
+      _showSuccessSnackBar(context, "🎉 예약 성공!");
+    } else {
+      _showSuccessSnackBar(context, "⚠️ 예약 실패!");
     }
   }
 
-  // 성공 스낵바(토스트) 띄우는 함수
+// 2. 성공 스낵바(토스트) 띄우는 함수
   void _showSuccessSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -86,9 +65,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
     );
   }
 
-  // --- 2. UI 및 다이얼로그 ---
-
-  // 예약 확인 다이얼로그
+// 3. 예약 확인 다이얼로그
   void _showReservationConfirmDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -102,8 +79,8 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context); // 다이얼로그 닫고
-              await _processBooking(context); // 예약 처리 시작
+              Navigator.pop(context);
+              await _processBooking(context);
             },
             child: const Text("확인"),
           ),
@@ -112,7 +89,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
     );
   }
 
-  // 로그인 필요 안내
+// 4. 로그인 필요 안내
   void _showLoginDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -132,6 +109,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -167,6 +145,7 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
     );
   }
 
+  // _buildBottomBar() 부분을 이렇게 수정하세요
   Widget _buildBottomBar() {
     return SafeArea(
       child: Container(
@@ -175,15 +154,14 @@ class _PackageDetailScreenState extends State<PackageDetailScreen> {
           style: ElevatedButton.styleFrom(
               backgroundColor: Colors.pinkAccent,
               padding: const EdgeInsets.symmetric(vertical: 16)),
-          onPressed: () {
-            _memberService.checkLoginStatus().then((isLoggedIn) {
+          onPressed: () async {
+            final token = await _memberService.getAccessToken();
+            if (token == null || token.isEmpty) {
               if (!mounted) return;
-              if (!isLoggedIn) {
-                _showLoginDialog(context);
-              } else {
-                _showReservationConfirmDialog(context);
-              }
-            });
+              _showLoginDialog(context);
+            } else {
+              _showReservationConfirmDialog(context);
+            }
           },
           child: const Text("예약하기", style: TextStyle(color: Colors.white, fontSize: 18)),
         ),
