@@ -1,9 +1,8 @@
-import 'dart:math' show min;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:second_trip_project/car/model/company_car_dto.dart';
-import 'package:second_trip_project/car/model/car_search_cursor_response.dart';
+import 'package:second_trip_project/car/model/car_search_result_dto.dart';
 
 import '../../common/constants/app_colors.dart';
 import '../../common/widget/app_base_layout.dart';
@@ -203,7 +202,7 @@ class _ShimmerOptionTile extends StatelessWidget {
 
 class _CarCard extends StatefulWidget {
   final int carIndex;
-  final CarSearchCursorResponseDTO car;
+  final CarSearchResultDTO car;
   final String carTypeImage;
   final String startDate;
   final String endDate;
@@ -230,17 +229,9 @@ class _CarCardState extends State<_CarCard> with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true; //화면 밖으로 나가도 위젯 상태 유지
 
-  static const int _optionLoadSize = 10;  //1회 최대 더보기 수 제한
-  bool _isLoadingMore = false;
+  static const int _initialVisibleCount = 3;  //초기 표시 개수
+  int _visibleCount = _initialVisibleCount;
   CompanyCarDTO? _selectedCar;
-
-  ///더보기 버튼 눌렀을때 데이터를 더 읽어옴
-  Future<void> _loadMoreOptions() async {
-    if (_isLoadingMore) return;
-    setState(() => _isLoadingMore = true);
-    await context.read<CarRentListController>().loadMoreOptions(widget.carIndex);
-    if (mounted) setState(() => _isLoadingMore = false);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -281,8 +272,8 @@ class _CarCardState extends State<_CarCard> with AutomaticKeepAliveClientMixin {
               ],
             ),
             const Divider(height: 20),
-            //CarSearchResultDTO 안에 있는 List<CompanyOptionDTO>의 각각의 CompanyOptionDTO를 동기적으로 타일에 담는다
-            ...car.companyCarDTOs.map((companyCarDTO) => _CompanyPriceTile(
+            //전체 companyCarDTOs 중 _visibleCount만큼만 표시, 더보기는 Flutter 내부에서 처리
+            ...car.companyCarDTOs.take(_visibleCount).map((companyCarDTO) => _CompanyPriceTile(
                   companyCarDTO: companyCarDTO,   //차량 옵션
                   isSelected: _selectedCar?.carId == companyCarDTO.carId, //선택한 차의 id와 데이터의 차 id가 같으면 isSeleted를 true로해서 버튼 색을 표시 해줌
                   onTap: () => setState(() {  //눌렀을때 _selectedOption의 상태를 변경함
@@ -292,20 +283,22 @@ class _CarCardState extends State<_CarCard> with AutomaticKeepAliveClientMixin {
                     _selectedCar?.carId == companyCarDTO.carId ? null : companyCarDTO;
                   }),
                 )),
-            if (car.companyCarDTOs.length < car.totalOptionCount)
-              _isLoadingMore
-                  ? Column(
-                      children: List.generate(
-                        //로딩중엔 shimmer타일을 더보기 갯수 만큼 그려줌
-                        min(_optionLoadSize, car.remainingCount), //min(10, 남은 수) 둘중에 작은 수만큼 shimmer를 만듦
-                        (_) => const _ShimmerOptionTile(),
-                      ),
-                    )
-                  : TextButton(
-                      onPressed: _loadMoreOptions,
-                      style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-                      child: Text('더보기 ${min(_optionLoadSize, car.remainingCount)}개'),
-                    ),
+            if (_visibleCount < car.companyCarDTOs.length)
+              TextButton(
+                onPressed: () => setState(() {
+                  _visibleCount = car.companyCarDTOs.length;
+                }),
+                style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+                child: Text('더보기 ${car.companyCarDTOs.length - _visibleCount}개'),
+              )
+            else if (_visibleCount > _initialVisibleCount)
+              TextButton(
+                onPressed: () => setState(() {
+                  _visibleCount = _initialVisibleCount;
+                }),
+                style: TextButton.styleFrom(foregroundColor: Colors.grey),
+                child: const Text('닫기'),
+              ),
             if (_selectedCar != null)  //회사 차량의 데이터가 있다면
               Padding(
                 padding: const EdgeInsets.only(top: 8),

@@ -5,7 +5,6 @@ class CarSearchCursorRequestDTO {
   final int cursorPrice;
   final String cursorName;
   final int size;
-  final int optionSize;
 
   const CarSearchCursorRequestDTO({
     required this.region,
@@ -14,7 +13,6 @@ class CarSearchCursorRequestDTO {
     this.cursorPrice = 0,
     this.cursorName = '',
     this.size = 10,
-    this.optionSize = 3,
   });
 
   Map<String, dynamic> toQueryParameters() {
@@ -25,7 +23,6 @@ class CarSearchCursorRequestDTO {
       'cursorPrice': cursorPrice,
       'cursorName': cursorName,
       'size': size,
-      'optionSize': optionSize,
     };
   }
 }
