@@ -7,10 +7,10 @@ import '../../common/widget/common_button.dart';
 import '../util/car_format_util.dart';
 import '../controller/car_reservation_controller.dart';
 import '../model/company_car_dto.dart';
-import '../model/car_search_cursor_response.dart';
+import '../model/car_search_result_dto.dart';
 
 class CarReservationScreen extends StatelessWidget {
-  final CarSearchCursorResponseDTO car;
+  final CarSearchResultDTO car;
   final CompanyCarDTO companyCarDTO;
   final DateTime startDate;
   final DateTime endDate;

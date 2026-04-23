@@ -185,12 +185,12 @@ class CalendarScreen extends StatelessWidget {
                               // 중간 달이면 firstDay(달력 좌측 outside 셀까지 하이라이트 확장)
                               monthRangeStart = (monthYM == startYM)  //
                                   ? start
-                                  : firstDay;
+                                  : DateTime(start.year, start.month, 1);
                               // 끝 달이면 실제 end 날짜에서 끝
                               // 중간 달이면 lastDay(달력 우측 outside 셀까지 하이라이트 확장)
                               monthRangeEnd = (monthYM == endYM)
                                   ? end
-                                  : lastDay;
+                                  : DateTime(end.year, end.month + 1, 0);
                             }
                           } else if (controller.rangeStart != null) {
                             // rangeStart만 선택된 상태 (사용자가 첫 번째 날짜만 탭한 상태)

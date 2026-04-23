@@ -38,7 +38,6 @@ class CarReservationController with ChangeNotifier {
       return null;
     }
 
-    _myRentals.insert(0, result.rental!);
     debugPrint('예약 응답: ${result.rental}');
     notifyListeners();
     return result.rental;
@@ -54,7 +53,7 @@ class CarReservationController with ChangeNotifier {
     _hasNext = false;
     notifyListeners();
 
-    await Future.delayed(const Duration(seconds: 5));
+    await Future.delayed(const Duration(seconds: 2));
     final result = await _service.fetchMyRentals(const CarReservationCursorRequestDTO());
 
     _isLoading = false;
