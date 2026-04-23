@@ -12,7 +12,7 @@ class TotalSearchScreen extends StatefulWidget {
 class _TotalSearchScreenState extends State<TotalSearchScreen> {
   int _currentIndex = 0;
 
-  // 렌터카를 제거하고 숙소와 항공권만 남김
+  // ㅇㅇㅇㅇ
   final List<Widget> _pages = const [
     SearchScreen(),           // 0: 숙소
     AirpostSearchScreen(),    // 1: 항공권

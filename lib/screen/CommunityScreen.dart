@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:second_trip_project/util/secure_storage_helper.dart'; // 💡 문의하기와 동일한 경로
@@ -42,9 +43,25 @@ class _CommunityScreenState extends State<CommunityScreen> {
         return;
       }
 
-      // 2. Authorization 헤더 포함하여 요청
+      // 1. .env에서 값을 가져옵니다.
+      final String rawBaseUrl = dotenv.env['BASE_URL'] ?? '10.0.2.2';
+
+// 2. 이미 'http'가 포함되어 있는지 확인하고, 없으면 붙입니다.
+      String baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'http://$rawBaseUrl';
+
+// 3. 만약 포트(:8080)가 이미 포함되어 있지 않다면 붙입니다.
+      if (!baseUrl.contains(':8080')) {
+        baseUrl = '$baseUrl:8080';
+      }
+
+// 4. 슬래시(/) 처리를 고려하여 최종 URL 조합
+      final String finalUrl = baseUrl.endsWith('/')
+          ? '${baseUrl}community/list'
+          : '$baseUrl/community/list';
+
+// 5. 요청 실행
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/community/list'),
+        Uri.parse(finalUrl),
         headers: {
           "Authorization": "Bearer $token",
           "Content-Type": "application/json",
@@ -65,7 +82,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
     } catch (e) {
       setState(() {
         isLoading = false;
-        errorMessage = "서버 연결에 실패했습니다.";
+        errorMessage = "연결 실패: $e";
       });
     }
   }
