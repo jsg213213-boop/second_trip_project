@@ -153,6 +153,7 @@ class _InquiryScreenState extends State<InquiryScreen> {
             MaterialPageRoute(
               builder: (context) => InquiryDetailScreen(inquiryData: item),
             ),
+
           );
         },
       ),

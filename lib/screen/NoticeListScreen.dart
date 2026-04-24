@@ -42,6 +42,7 @@ class _NoticeListScreenState extends State<NoticeListScreen> {
           ? '${baseUrl}api/notices'
           : '$baseUrl/api/notices';
 
+
       // 💡 5. 요청 실행
       final response = await http.get(Uri.parse(finalUrl));
 
