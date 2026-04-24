@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart'; // 1. Dio 패키지 추가
+import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // 💡 dotenv 추가
 
 class CommunityWriteScreen extends StatefulWidget {
   const CommunityWriteScreen({super.key});
@@ -8,30 +9,43 @@ class CommunityWriteScreen extends StatefulWidget {
   State<CommunityWriteScreen> createState() => _CommunityWriteScreenState();
 }
 
+
 class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
-  String _selectedCategory = '자유게시판';
 
-  // 2. 서버로 데이터를 보내는 함수
   Future<void> _submitPost() async {
-    final dio = Dio();
-    // 에뮬레이터에서 내 컴퓨터 백엔드에 접근할 때는 10.0.2.2를 사용합니다.
-    final String url = 'http://10.0.2.2:8080/community/register';
-
     try {
+      // 1. .env에서 값을 가져옵니다.
+      final String rawBaseUrl = dotenv.env['BASE_URL'] ?? '10.0.2.2';
+
+      // 2. http 프로토콜 자동 확인 및 붙이기
+      String baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'http://$rawBaseUrl';
+
+      // 3. 포트(:8080) 확인 및 붙이기
+      if (!baseUrl.contains(':8080')) {
+        baseUrl = '$baseUrl:8080';
+      }
+
+      // 4. 슬래시(/) 처리를 고려하여 최종 URL 조합 (글 등록 경로: /community/register)
+      final String finalUrl = baseUrl.endsWith('/')
+          ? '${baseUrl}community/register'
+          : '$baseUrl/community/register';
+
+      // 5. Dio 요청 실행
+      final dio = Dio();
       final response = await dio.post(
-        url,
+        finalUrl,
         data: {
           'title': _titleController.text,
           'content': _contentController.text,
-          'mid': 'testuser', // 백엔드에서 받는 필드명과 일치시켜야 합니다.
+          'mid': 'testuser',
         },
       );
 
       if (response.statusCode == 200) {
         print('서버 전송 성공!');
-        if (mounted) Navigator.pop(context, true); // 성공 시 화면 닫기
+        if (mounted) Navigator.pop(context, true);
       }
     } catch (e) {
       print('서버 전송 실패: $e');
@@ -52,6 +66,7 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ... 기존 build 위젯 코드는 그대로 유지
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -71,7 +86,6 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
                 );
                 return;
               }
-              // 3. 기존 Navigator.pop 대신 서버 전송 함수 호출
               _submitPost();
             },
             child: const Text('등록', style: TextStyle(color: Color(0xFFF7323F), fontWeight: FontWeight.bold, fontSize: 16)),
@@ -82,18 +96,6 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            DropdownButtonFormField<String>(
-              value: _selectedCategory,
-              decoration: const InputDecoration(
-                labelText: '카테고리 선택',
-                border: OutlineInputBorder(),
-              ),
-              items: ['자유게시판', '여행후기', '질문답변']
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedCategory = val!),
-            ),
-            const SizedBox(height: 20),
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(
@@ -108,7 +110,7 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
               controller: _contentController,
               maxLines: 15,
               decoration: const InputDecoration(
-                hintText: '내용을 입력하세요 (팁: 여행 후기는 사진과 함께 올리면 더 좋아요!)',
+                hintText: '내용을 입력하세요',
                 border: InputBorder.none,
               ),
             ),
@@ -116,6 +118,5 @@ class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
         ),
       ),
     );
-
   }
 }
