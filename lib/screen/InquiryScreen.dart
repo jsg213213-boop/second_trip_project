@@ -155,7 +155,6 @@ class _InquiryScreenState extends State<InquiryScreen> {
             ),
 
 
-
           );
         },
       ),

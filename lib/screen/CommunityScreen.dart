@@ -45,7 +45,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
 
 
-
       // 1. .env에서 값을 가져옵니다.
       final String rawBaseUrl = dotenv.env['BASE_URL'] ?? '10.0.2.2';
 

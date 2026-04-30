@@ -11,7 +11,6 @@ class CommunityWriteScreen extends StatefulWidget {
 
 
 
-
 class _CommunityWriteScreenState extends State<CommunityWriteScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();

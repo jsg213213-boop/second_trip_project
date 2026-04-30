@@ -14,7 +14,6 @@ class NoticeWriteScreen extends StatefulWidget {
 
 
 
-
 class _NoticeWriteScreenState extends State<NoticeWriteScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();

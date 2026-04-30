@@ -30,4 +30,3 @@ class NoticeDetailScreen extends StatelessWidget {
   }
 }
 
-
