@@ -1,7 +1,7 @@
 // test/package_controller_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:second_trip_project/package/controller/package_controller.dart';
-import 'package:second_trip_project/services/reservation_service.dart';
+import 'package:second_trip_project/services/package_reservation_service.dart';
 
 void main() {
 

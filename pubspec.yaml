@@ -90,7 +90,6 @@ flutter:
   assets:
     #    - assets/images/logo.png # 하나의 이미지만 등록하기.
     - assets/images/ # 폴더 내의 모든 파일을 등록(추천)
-    - assets/data/packages.json
     - .env
   # To add assets to your application, add an assets section, like this:
   # assets:

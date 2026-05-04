@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/intl.dart';
 import 'secure_storage_helper.dart';
 
 late final Dio dio; // 회원
@@ -8,7 +9,9 @@ late final Dio publicDio; // 비회원
 class ApiClient {
   // 싱글톤 패턴
   static final ApiClient _instance = ApiClient._internal();
+
   factory ApiClient() => _instance;
+
   ApiClient._internal();
 
   final _storage = SecureStorageHelper();
@@ -34,26 +37,28 @@ class ApiClient {
     dio = Dio(baseOptions);
 
     // 요청 인터셉터 → 모든 요청에 자동으로 토큰 추가
-    dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await _storage.getAccessToken();
-        print('===== API 호출 토큰: $token ====='); // 로그 추가
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        print('===== 헤더: ${options.headers} ====='); // 로그 추가
-        return handler.next(options);
-      },
-      // 응답 에러 처리
-      onError: (error, handler) async {
-        // 토큰 만료 (401) 시 로그아웃
-        if (error.response?.statusCode == 401) {
-          await _storage.logout();
-          print('토큰 만료 → 로그아웃 처리');
-        }
-        return handler.next(error);
-      },
-    ));
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await _storage.getAccessToken();
+          print('===== API 호출 토큰: $token ====='); // 로그 추가
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          print('===== 헤더: ${options.headers} ====='); // 로그 추가
+          return handler.next(options);
+        },
+        // 응답 에러 처리
+        onError: (error, handler) async {
+          // 토큰 만료 (401) 시 로그아웃
+          if (error.response?.statusCode == 401) {
+            await _storage.logout();
+            print('토큰 만료 → 로그아웃 처리');
+          }
+          return handler.next(error);
+        },
+      ),
+    );
   }
 
   // ─── 찜 추가 ──────────────────────────────────────
@@ -105,8 +110,7 @@ class ApiClient {
   // ─── 찜 여부 확인 ─────────────────────────────────
   Future<bool> checkFavorite(String contentId) async {
     try {
-      final response =
-      await dio.get('/api/favorites/check/$contentId');
+      final response = await dio.get('/api/favorites/check/$contentId');
       return response.data as bool;
     } on DioException catch (e) {
       print('찜 여부 확인 에러: ${e.message}');
@@ -160,29 +164,6 @@ class ApiClient {
     }
   }
 
-  // ─── 내 패키지 예약 목록 조회 ─────────────────────────
-  Future<List<dynamic>> getMyPackageReservations() async {
-    try {
-      final response = await dio.get('/api/package-reservations/my-package');
-      print('=== [DEBUG] 서버에서 보내준 원본 데이터 전체 ===');
-      print(response.data);
-      return response.data as List<dynamic>;
-    } catch (e) {
-      print('=== [DEBUG] 통신 중 에러 발생 ===');
-      print('에러 상세: $e'); // 에러 내용 전부 출력
-      return [];
-    }
-  }
-
-  // 예약 취소
-  Future<void> deleteReservation(int reservationId) async {
-    try {
-      await dio.delete('/api/package-reservations/$reservationId');
-    } catch (e) {
-      throw e;
-    }
-  }
-
   // ─── 예약 취소 ────────────────────────────────────
   Future<bool> cancelReservation(int reservationId) async {
     try {
@@ -201,10 +182,7 @@ class ApiClient {
     try {
       final response = await dio.get(
         '/api/reservations/booked-dates',
-        queryParameters: {
-          'contentId': contentId,
-          'roomCode': roomCode,
-        },
+        queryParameters: {'contentId': contentId, 'roomCode': roomCode},
       );
       return List<String>.from(response.data);
     } on DioException catch (e) {
@@ -212,4 +190,95 @@ class ApiClient {
       return [];
     }
   }
+
+
+
+  // ─── 패키지 상품 목록 조회 ────────────────────────────────────
+  Future<List<dynamic>> getPackageList({
+    required String category,
+    required int page,
+    required int size,
+  }) async {
+    try {
+      final response = await dio.get(
+        '/api/packages/packages_list',
+        queryParameters: {'category': category, 'page': page, 'size': size},
+      );
+
+      // Spring Boot Page 객체에서 content 리스트만 추출
+      if (response.data != null && response.data['content'] != null) {
+        return response.data['content'];
+      }
+      return [];
+    } on DioException catch (e) {
+      print('패키지 목록 조회 에러: ${e.message}');
+      return [];
+    }
+  }
+
+  // ─── 패키지 상품 상세 조회 ────────────────────────────────────
+  Future<Map<String, dynamic>?> getPackageDetail(int id) async {
+    try {
+      final response = await dio.get('/api/packages/$id');
+      return response.data;
+    } on DioException catch (e) {
+      print('패키지 상세 조회 에러: ${e.message}');
+      return null;
+    }
+  }
+
+  // ─── 패키지 상품 예약 생성 ────────────────────────────────────────
+  Future<dynamic> createPackageReservation({
+    required int? packageId,
+    required DateTime? reservationDate, // 타입을 DateTime?으로 받습니다.
+    required int peopleCount,
+    required int totalPrice,
+  }) async {
+    try {
+      // DateTime을 서버가 인식하기 좋은 "yyyy-MM-dd" 문자열로 변환
+      String? formattedDate = reservationDate != null
+          ? DateFormat('yyyy-MM-dd').format(reservationDate)
+          : null;
+
+      final response = await dio.post(
+        '/api/package_reservations',
+        data: {
+          'packageId': packageId,
+          'reservationDate': formattedDate, // 변환된 문자열 전송
+          'peopleCount': peopleCount,
+          'totalPrice': totalPrice,
+        },
+      );
+
+      return response.data;
+    } on DioException catch (e) {
+      print('패키지 예약 전송 에러: ${e.message}');
+      rethrow;
+    }
+  }
+
+
+  // ─── 내 패키지 예약 목록 조회(마이페이지에서 조회) ───────────────
+  Future<List<dynamic>> getMyPackageReservations() async {
+    try {
+      // 경로를 언더바(_)로 통일하기로 하셨으므로 확인 필수!
+      final response = await dio.get('/api/package_reservations/my_package');
+      return response.data as List<dynamic>;
+    } catch (e) {
+      print('목록 조회 에러: $e');
+      return [];
+    }
+  }
+
+  // 내 패키지 예약 취소
+  Future<void> deletePackageReservation(int reservationId) async {
+    try {
+      await dio.delete('/api/package_reservations/$reservationId');
+    } catch (e) {
+      print('삭제 통신 에러: $e');
+      rethrow;
+    }
+  }
+
+
 }

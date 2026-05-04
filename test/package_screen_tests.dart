@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:second_trip_project/package/model/package_item.dart';
+import 'package:second_trip_project/package/model/package_item_dto.dart';
 import 'package:second_trip_project/package/screen/package_detail_screen.dart';
 import 'package:second_trip_project/services/member_service.dart'; // import 확인!
 
