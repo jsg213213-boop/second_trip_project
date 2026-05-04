@@ -42,6 +42,7 @@ class InquiryDetailScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
+
                     status,
                     style: TextStyle(color: isDone ? classicBlue : Colors.grey[600], fontSize: 10, fontWeight: FontWeight.bold),
                   ),
@@ -103,11 +104,10 @@ class InquiryDetailScreen extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)),
       child: Center(
-        child: Text(
-          '답변을 기다리고 있습니다.\n빠른 시일 내에 답변해 드리겠습니다.',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-        ),
+
+
+
+
       ),
     );
   }
