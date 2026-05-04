@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // 💡 dotenv 패키지 추가
 
 class CommunityDetailScreen extends StatefulWidget {
   final dynamic post;
@@ -11,7 +12,6 @@ class CommunityDetailScreen extends StatefulWidget {
 }
 
 class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
-  // 💡 댓글 기능이 필요 없으면 _replyController와 _submitReply는 삭제하셔도 됩니다.
   List<dynamic> replies = [];
 
   @override
@@ -22,9 +22,29 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   Future<void> _fetchReplies() async {
     try {
+      // 1. .env에서 값을 가져옵니다.
+      final String rawBaseUrl = dotenv.env['BASE_URL'] ?? '10.0.2.2';
+
+      // 2. http 프로토콜 자동 확인 및 붙이기
+      String baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'http://$rawBaseUrl';
+
+      // 3. 포트(:8080) 확인 및 붙이기
+      if (!baseUrl.contains(':8080')) {
+        baseUrl = '$baseUrl:8080';
+      }
+
+      // 4. 슬래시(/) 처리를 고려하여 댓글 URL 조합
+      final String finalUrl = baseUrl.endsWith('/')
+          ? '${baseUrl}replies/${widget.post['id']}'
+          : '$baseUrl/replies/${widget.post['id']}';
+
+      // 5. Dio 요청 실행
       final dio = Dio();
-      final response = await dio.get('http://10.0.2.2:8080/replies/${widget.post['id']}');
-      setState(() { replies = response.data; });
+      final response = await dio.get(finalUrl);
+
+      setState(() {
+        replies = response.data;
+      });
     } catch (e) {
       print("댓글 불러오기 실패: $e");
     }
@@ -38,7 +58,6 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text("게시글 상세")),
-      // 💡 Column 대신 ListView만 사용해도 충분합니다.
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -49,7 +68,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           Text(widget.post['content']?.toString() ?? '내용이 없습니다.', style: const TextStyle(fontSize: 16)),
           const Divider(height: 40),
 
-          ...replies.map((r) => ListTile(title: Text(r['content']), subtitle: Text(r['mid']))),
+          ...replies.map((r) => ListTile(
+              title: Text(r['content'] ?? '댓글 내용 없음'),
+              subtitle: Text(r['mid'] ?? '익명')
+          )),
         ],
       ),
     );

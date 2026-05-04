@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // 💡 dotenv 패키지 추가
 import 'package:second_trip_project/util/secure_storage_helper.dart';
 
 class WriteInquiryScreen extends StatefulWidget {
@@ -23,7 +23,6 @@ class _WriteInquiryScreenState extends State<WriteInquiryScreen> {
 
   Future<void> _submitInquiry() async {
     String? token = await _getToken();
-    debugPrint("### 서버로 전송할 토큰 확인: $token");
 
     if (token == null || token.isEmpty || token == "null") {
       if (!mounted) return;
@@ -33,11 +32,26 @@ class _WriteInquiryScreenState extends State<WriteInquiryScreen> {
       return;
     }
 
-    final url = Uri.parse('http://10.0.2.2:8080/api/inquiries');
-
     try {
+      // 💡 1. .env에서 값을 가져옵니다.
+      final String rawBaseUrl = dotenv.env['BASE_URL'] ?? '10.0.2.2';
+
+      // 💡 2. http 프로토콜 확인 및 붙이기
+      String baseUrl = rawBaseUrl.startsWith('http') ? rawBaseUrl : 'http://$rawBaseUrl';
+
+      // 💡 3. 포트(:8080) 확인 및 붙이기
+      if (!baseUrl.contains(':8080')) {
+        baseUrl = '$baseUrl:8080';
+      }
+
+      // 💡 4. 문의 등록용 최종 URL 조합
+      final String finalUrl = baseUrl.endsWith('/')
+          ? '${baseUrl}api/inquiries'
+          : '$baseUrl/api/inquiries';
+
+      // 💡 5. 요청 실행
       final response = await http.post(
-        url,
+        Uri.parse(finalUrl),
         headers: {
           "Content-Type": "application/json; charset=UTF-8",
           "Authorization": "Bearer $token",
@@ -46,12 +60,8 @@ class _WriteInquiryScreenState extends State<WriteInquiryScreen> {
           "title": _titleController.text.trim(),
           "content": _contentController.text.trim(),
           "mid": "asd@naver.com",
-          // category 필드 제거됨
         }),
       );
-
-      debugPrint("서버 응답 코드: ${response.statusCode}");
-      debugPrint("서버 응답 본문: ${response.body}");
 
       if (!mounted) return;
 
@@ -68,6 +78,13 @@ class _WriteInquiryScreenState extends State<WriteInquiryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('서버 통신 중 에러가 발생했습니다.')));
     }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _contentController.dispose();
+    super.dispose();
   }
 
   @override
